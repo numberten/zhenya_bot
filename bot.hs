@@ -17,9 +17,8 @@ port = 6667
 chan = "#greatestguys"
 nick = "zhenya_bot"
 
-type Log = [(String, String)]
 type Net = ReaderT Bot IO
-data Bot = Bot { socket :: Handle, starttime :: ClockTime, events :: Log}
+data Bot = Bot { socket :: Handle, starttime :: ClockTime}
 
 main :: IO ()
 main = bracket connect disconnect loop
@@ -27,14 +26,14 @@ main = bracket connect disconnect loop
 		--disconnect :: Bot -> IO ()
 		disconnect = hClose . socket
 		--loop :: Bot -> IO ()
-		loop st    = catch (runReaderT run st) (\(e :: SomeException) -> return ()) --(const $ return ())
+		loop st    = catch (runReaderT run st) (\(e :: SomeException) -> return ()) 
 
 connect :: IO Bot
 connect = notify $ do
 	t <- getClockTime
 	h <- connectTo server (PortNumber (fromIntegral port))
 	hSetBuffering h NoBuffering
-	return (Bot h t [])
+	return (Bot h t)
 	where
 		notify a = bracket_ (printf "Connecting to %s ... " server >> hFlush stdout) (putStrLn "done.") a
 
@@ -49,7 +48,7 @@ listen :: Handle -> Net ()
 listen h = forever $ do
 	s <- init `fmap` io (hGetLine h)
 	io (putStrLn s)
-	if ping s then pong s else (if isQuit s then goodbye else (if isSeen s then doSeen s else eval (clean s)))
+	if ping s then pong s else (if isQuit s then goodbye else (if isSeen s then doSeen s else (uncurry eval) $ clean s))
 	where
 		forever a = a >> forever a
 		clean ss  = (drop 1 . dropWhile (/= ':') . drop 1 $ ss, drop 1 . takeWhile (/= '!') $ ss)
@@ -70,27 +69,19 @@ doSeen s = privmsg $ seen name secs
 isPrivMsg :: String -> Bool
 isPrivMsg = elem "PRIVMSG" . words
 
-
-addToLogs :: String -> Log -> Log
-addToLogs s l = (source, message):l
-	where 	source = (takeWhile (/='!') . drop 1 $ s)
-		message = (dropWhile (/=':') . drop 1 $ s)
-
---log :: String -> Net ()
---log x =
-eval :: (String, String) -> Net ()
-eval ("!quit", _)                    = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
-eval ("!uptime", _)                  = uptime >>= privmsg 
-eval ("!ascend", person)             = giveop person >>  privmsg ("Welcome to the ranks of the Ascended, Brother " ++ person ++ ".")
-eval ("!ding", person)               = giveop person
-eval (x, _) | "!id " `isPrefixOf` x  = privmsg (drop 4 x)
-            | "!roll" `isPrefixOf` x = io (randomI . takeWhile (isDigit) . dropWhile (not . isDigit) $ x) >>= privmsg
-	    | "zhenya_bot" `isPrefixOf` x = privmsg "hm?"
-            | "!seen " `isPrefixOf` x     = whois (drop 6 x)
- 	    | match x pigup 0.3      = privmsg "Jolly good pigups, jolly good."
-            | match x bug 0.5        = privmsg "Noted."
-	    | match x meat 0.2       = privmsg "Can we go to DQ?"
-eval (_, _)                          = return ()
+eval :: String -> String -> Net ()
+eval "!quit" _                    = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
+eval "!uptime" _                  = uptime >>= privmsg 
+eval "!ascend" person             = giveop person >>  privmsg ("Welcome to the ranks of the Ascended, Brother " ++ person ++ ".")
+eval "!ding" person               = giveop person
+eval x _ | "!id " `isPrefixOf` x  = privmsg (drop 4 x)
+         | "!roll" `isPrefixOf` x = io (randomI . takeWhile (isDigit) . dropWhile (not . isDigit) $ x) >>= privmsg
+	 | "zhenya_bot" `isPrefixOf` x = privmsg "hm?"
+         | "!seen " `isPrefixOf` x     = whois (drop 6 x)
+ 	 | match x pigup 0.3      = privmsg "Jolly good pigups, jolly good."
+         | match x bug 0.5        = privmsg "Noted."
+	 | match x meat 0.2       = privmsg "Can we go to DQ?"
+eval _ _                          = return ()
 
 pigup = "pigups"
 meat = "cheap meat"
