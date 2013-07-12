@@ -2,6 +2,7 @@ zhenya_bot
 ==========
 
 Irc bot, meant for use on a private irc server. Mostly humorous, with functionality slowly being added.
+Conceived via [this tutorial](http://www.haskell.org/haskellwiki/Roll_your_own_IRC_bot) and breathed life into by the tarnished souls of many a bug who could not be dried.
 
 commands
 --------
