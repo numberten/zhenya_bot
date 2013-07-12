@@ -1,9 +1,7 @@
 zhenya_bot
 ==========
 
-Irc bot, meant for use on a private irc server. Mostly humorous, with functionality slowly being added.
-Conceived via [this tutorial](http://www.haskell.org/haskellwiki/Roll_your_own_IRC_bot) and breathed life into by the tarnished souls of many a bug who could not be dried.
-
+Irc bot, meant for use on a private irc server. Mostly humorous, with functionality slowly being added. Conceived via [this tutorial](http://www.haskell.org/haskellwiki/Roll_your_own_IRC_bot) and breathed life into by the tarnished souls of many a bug who could not be dried. [Edit distance](http://www.haskell.org/haskellwiki/Edit_distance) in O(length a * (1 + dist a b)) time courtesy of Lloyd Allison.
 commands
 --------
 
