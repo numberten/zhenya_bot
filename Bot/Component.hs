@@ -1,0 +1,68 @@
+{-# LANGUAGE ExistentialQuantification #-}
+module Bot.Component (
+    Botable (..)
+,   BotComponent (..)
+,   BotState (..)
+,   Bot
+,   ircWrite
+,   ircReply
+,   ircReplyTo
+)   where
+
+import Control.Applicative
+import Control.Monad
+import Control.Monad.State
+import System.Exit
+import System.IO
+import Text.Printf
+
+-- | A type class for wrapping bot functionality. 
+-- The idea is that each distinct piece of functionality would have it's own
+-- value where the type would be of the Botable class. This allows the BotConfig
+-- to maintain a heterogeneous list of Botable values each of which containing
+-- potentially unique state.
+class Botable a where
+    -- | Process a raw IRC message. The function is responsible for parsing out
+    -- the cruft of the IRC protocol.
+    process :: String -> a -> Bot a
+
+-- | A type that wraps Botable types.
+-- This type is necessary for making the types work out when storing
+-- heterogeneous Botable types in the same collection.
+data BotComponent = forall a . Botable a => MkBotable a
+
+-- Make `BotComponent` an instance of Botable such that it recursively attempts
+-- to process the line as the inner Botable value.
+instance Botable BotComponent where
+    process line (MkBotable a)  =   liftM MkBotable 
+                                $   process line a `asTypeOf` return a
+
+-- | The internal state of the IRC Bot
+data BotState = BotState { 
+        socket          :: Handle
+    -- | If this value is not Nothing, then the bot will exit with the given
+    -- `ExitCode`
+    ,   exitCode        :: Maybe ExitCode
+    ,   components      :: [BotComponent]
+    ,   currentChannel  :: String
+}
+
+-- | A type synonym for the Bot monad.
+type Bot a = StateT BotState IO a
+
+-- | Write a `String` message to IRC.
+ircWrite :: String -> String -> Bot ()
+ircWrite command message = do
+	handle  <-  gets socket
+	liftIO  $   hPrintf handle "%s %s\r\n" command message
+	        >>  printf "> %s %s\n" command message
+
+-- | Send a message to the current channel or nick.
+ircReply :: String -> Bot ()
+ircReply message    =   gets currentChannel 
+                    >>= ircReplyTo message
+
+-- | Send a message to a specific channel or nick.
+ircReplyTo :: String -> String -> Bot ()
+ircReplyTo channel message = ircWrite "PRIVMSG" (channel ++ " :" ++ message)
+

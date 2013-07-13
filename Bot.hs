@@ -1,4 +1,3 @@
-{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -7,11 +6,14 @@ module Bot (
 ,   BotComponent (..)
 ,   BotConfig (..)
 ,   BotState (..)
+,   Bot
 ,   defaultBotConfig
 ,   withComponents
 ,   runBot
 ,   ircWrite
-) where
+)   where
+
+import Bot.Component
 
 import Control.Applicative
 import Control.Monad
@@ -24,27 +26,6 @@ import System.IO
 import System.Time
 import Text.Printf
 
--- | A type class for wrapping bot functionality. 
--- The idea is that each distinct piece of functionality would have it's own
--- value where the type would be of the Botable class. This allows the BotConfig
--- to maintain a heterogeneous list of Botable values each of which containing
--- potentially unique state.
-class Botable a where
-    -- | Process a raw IRC message. The function is responsible for parsing out
-    -- the cruft of the IRC protocol.
-    process :: String -> a -> Bot a
-
--- | A type that wraps Botable types.
--- This type is necessary for making the types work out when storing
--- heterogeneous Botable types in the same collection.
-data BotComponent = forall a . Botable a => MkBotable a
-
--- Make `BotComponent` an instance of Botable such that it recursively attempts
--- to process the line as the inner Botable value.
-instance Botable BotComponent where
-    process line (MkBotable a)  =   liftM MkBotable 
-                                $   process line a `asTypeOf` return a
-
 -- | The configuration used to initialize an instance of a chat bot.
 data BotConfig = BotConfig {
         cfgServer      :: String
@@ -53,18 +34,6 @@ data BotConfig = BotConfig {
     ,   cfgChannel     :: [String]
     ,   cfgComponents  :: [Bot BotComponent]
 }
-
--- | The internal state of the IRC Bot
-data BotState = BotState { 
-        socket      :: Handle
-    -- | If this value is not Nothing, then the bot will exit with the given
-    -- `ExitCode`
-    ,   exitCode    :: Maybe ExitCode
-    ,   components  :: [BotComponent]
-}
-
--- | A type synonym for the Bot monad.
-type Bot a = StateT BotState IO a
 
 -- | A default `BotConfig` containing `BotComponent`s that are likely wanted by
 -- every bot. Such as pingResponse, 
@@ -101,10 +70,11 @@ runBot BotConfig{..}    =   connect
             hSetBuffering socket NoBuffering
             return BotState {
                     socket
-                ,   exitCode    = Nothing
+                ,   exitCode        = Nothing
+                ,   currentChannel  = ""
                 -- We will update the components in the init method so that they
                 -- can be evaluated within the Bot monad
-                ,   components  = []
+                ,   components      = []
             }
 
         -- Close the socket and return with the desired exit code.
@@ -139,13 +109,6 @@ runBot BotConfig{..}    =   connect
             components  <-  gets components 
                         >>= mapM (process message)
             modify $ \s -> s { components }
-
--- | Write a `String` message to IRC.
-ircWrite :: String -> String -> Bot ()
-ircWrite command message = do
-	handle  <-  gets socket
-	liftIO  $   hPrintf handle "%s %s\r\n" command message
-	        >>  printf "> %s %s\n" command message
 
 -- | Read from IRC. 
 -- This method is not exposed because there should be no reason that a

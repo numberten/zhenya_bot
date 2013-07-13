@@ -30,7 +30,7 @@ flagDefinition = Flags {
                     &=  help "The nick that the bot should take"
                     &=  opt "nick"
                     &=  typ "Nick"
-    ,   channelFlag =   ["#greatestguys"]
+    ,   channelFlag =   []
                     &=  help "The channel that the bot should join"
                     &=  opt "channel"
                     &=  typ "Channel"
@@ -41,7 +41,7 @@ flagDefinition = Flags {
 -- and start the IRC bot.
 main :: IO ()
 main = do
-    flags@Flags{..} <-  cmdArgs flagDefinition
+    Flags{..} <-  cmdArgs flagDefinition
     runBot $ defaultBotConfig {
             cfgServer   = serverFlag
         ,   cfgPort     = portFlag
