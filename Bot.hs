@@ -1,4 +1,5 @@
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 module Bot (
@@ -17,7 +18,6 @@ import Control.Monad
 import Control.Monad.Error
 import Control.Monad.State
 import Data.Maybe
-import Data.Traversable
 import Network
 import System.Exit
 import System.IO
@@ -32,7 +32,7 @@ import Text.Printf
 class Botable a where
     -- | Process a raw IRC message. The function is responsible for parsing out
     -- the cruft of the IRC protocol.
-    process :: String -> a -> IO a
+    process :: String -> a -> Bot a
 
 -- | A type that wraps Botable types.
 -- This type is necessary for making the types work out when storing
@@ -51,13 +51,17 @@ data BotConfig = BotConfig {
     ,   cfgPort        :: Int
     ,   cfgNick        :: String
     ,   cfgChannel     :: String
-    ,   cfgComponents  :: [BotComponent]
+    -- TODO: Would really like this to be a [Bot BotComponent] instead of IO
+    -- because it would allow for the use of nifty things like ircWrite during
+    -- initializtion. The problem is that in connect, cfgComponents must be
+    -- sequenced before the BotState can be created, and the BotState is
+    -- required to create a valid Bot context.
+    ,   cfgComponents  :: [IO BotComponent]
 }
 
 -- | The internal state of the IRC Bot
 data BotState = BotState { 
         socket      :: Handle
-    ,   startTime   :: ClockTime
     -- | If this value is not Nothing, then the bot will exit with the given
     -- `ExitCode`
     ,   exitCode    :: Maybe ExitCode
@@ -84,7 +88,7 @@ defaultBotConfig = BotConfig {
 -- >        component1
 -- >    ,   component2
 -- > ]
-withComponents  :: BotConfig -> [BotComponent] -> BotConfig
+withComponents  :: BotConfig -> [IO BotComponent] -> BotConfig
 withComponents cfg additional = cfg {
         cfgComponents = cfgComponents cfg ++ additional
     }
@@ -97,14 +101,14 @@ runBot BotConfig{..}    =   connect
     where
         -- Connect to the server and create the resulting `BotState`
         connect = do
-            t <- getClockTime
-            h <- connectTo cfgServer (PortNumber $ fromIntegral cfgPort)
-            hSetBuffering h NoBuffering
+            socket      <-  connectTo cfgServer 
+                        $   PortNumber (fromIntegral cfgPort)
+            components  <-  sequence cfgComponents
+            hSetBuffering socket NoBuffering
             return BotState {
-                    socket      = h
-                ,   startTime   = t
+                    socket
+                ,   components 
                 ,   exitCode    = Nothing
-                ,   components  = cfgComponents
             }
 
         -- Close the socket and return with the desired exit code.
@@ -133,8 +137,10 @@ runBot BotConfig{..}    =   connect
         -- components
         runComponents :: Bot ()
         runComponents = do
-            message <- ircRead
-            return ()
+            message     <-  ircRead
+            components  <-  gets components 
+                        >>= mapM (process message)
+            modify $ \s -> s { components }
 
 -- | Write a `String` message to IRC.
 ircWrite :: String -> String -> Bot ()

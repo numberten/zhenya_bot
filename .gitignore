@@ -1,5 +1,5 @@
 *.swp
-bot
-bot.hi
-bot.o
+*.hi
+*.o
 
+bot
