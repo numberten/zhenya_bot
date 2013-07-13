@@ -35,12 +35,12 @@ flagDefinition = Flags {
 -- and start the IRC bot.
 main :: IO ()
 main = do
-    flags   <-  cmdArgs flagDefinition
+    flags@Flags{..} <-  cmdArgs flagDefinition
     runBot $ defaultBotConfig {
-            cfgServer   = serverFlag flags
-        ,   cfgPort     = portFlag flags
-        ,   cfgChannel  = channelFlag flags
-        ,   cfgNick     = nickFlag flags
+            cfgServer   = serverFlag
+        ,   cfgPort     = portFlag
+        ,   cfgChannel  = channelFlag
+        ,   cfgNick     = nickFlag
         } `withComponents` [
         ]
 
