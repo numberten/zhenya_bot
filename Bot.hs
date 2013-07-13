@@ -16,8 +16,8 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Error
 import Control.Monad.State
-import Data.Map
 import Data.Maybe
+import Data.Traversable
 import Network
 import System.Exit
 import System.IO
@@ -39,27 +39,19 @@ class Botable a where
 -- heterogeneous Botable types in the same collection.
 data BotComponent = forall a . Botable a => MkBotable a
 
--- Make 'BotComponent' an instance of Botable such that it recursively attempts
+-- Make `BotComponent` an instance of Botable such that it recursively attempts
 -- to process the line as the inner Botable value.
 instance Botable BotComponent where
     process line (MkBotable a)  =   liftM MkBotable 
                                 $   process line a `asTypeOf` return a
 
--- | Used to initialize an instance of a chat bot.
+-- | The configuration used to initialize an instance of a chat bot.
 data BotConfig = BotConfig {
         cfgServer      :: String
     ,   cfgPort        :: Int
     ,   cfgNick        :: String
     ,   cfgChannel     :: String
-    ,   cfgComponents  :: [(String,BotComponent)]
-}
-
-defaultBotConfig = BotConfig {
-        cfgServer       = "localhost"
-    ,   cfgPort         = 6667
-    ,   cfgNick         = "IRCBot"
-    ,   cfgChannel      = "#robotz"
-    ,   cfgComponents   = []
+    ,   cfgComponents  :: [BotComponent]
 }
 
 -- | The internal state of the IRC Bot
@@ -69,11 +61,21 @@ data BotState = BotState {
     -- | If this value is not Nothing, then the bot will exit with the given
     -- `ExitCode`
     ,   exitCode    :: Maybe ExitCode
-    ,   components  :: Map String BotComponent 
+    ,   components  :: [BotComponent]
 }
 
 -- | A type synonym for the Bot monad.
 type Bot a = StateT BotState IO a
+
+-- | A default `BotConfig` containing `BotComponent`s that are likely wanted by
+-- every bot. Such as pingResponse, 
+defaultBotConfig = BotConfig {
+        cfgServer       = "localhost"
+    ,   cfgPort         = 6667
+    ,   cfgNick         = "IRCBot"
+    ,   cfgChannel      = "#robotz"
+    ,   cfgComponents   = []
+}
 
 -- | There are some components in the defaultBotConfig that probably should not
 -- be taken out. This function exists to make the process of adding new
@@ -82,7 +84,7 @@ type Bot a = StateT BotState IO a
 -- >        component1
 -- >    ,   component2
 -- > ]
-withComponents  :: BotConfig -> [(String,BotComponent)] -> BotConfig
+withComponents  :: BotConfig -> [BotComponent] -> BotConfig
 withComponents cfg additional = cfg {
         cfgComponents = cfgComponents cfg ++ additional
     }
@@ -102,7 +104,7 @@ runBot BotConfig{..}    =   connect
                     socket      = h
                 ,   startTime   = t
                 ,   exitCode    = Nothing
-                ,   components  = fromList cfgComponents
+                ,   components  = cfgComponents
             }
 
         -- Close the socket and return with the desired exit code.
@@ -125,7 +127,7 @@ runBot BotConfig{..}    =   connect
                 $   \e  ->  liftIO (print e)
                         >>  modify (\s -> s {exitCode = Just $ ExitFailure 1})
             -- Continue to loop if there is no exit code, other wise stop.
-            get >>= liftM2 fromMaybe loop . (return . void . exitCode)
+            get >>= return . (return <$>) . void . exitCode >>= fromMaybe loop
         
         -- Read a message from IRC and process it with each of the registered
         -- components
