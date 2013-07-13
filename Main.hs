@@ -2,6 +2,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 import Bot
+import Bot.Component.Command
+import Bot.IO
 
 import Data.List
 import System.Console.CmdArgs.Implicit

@@ -3,10 +3,7 @@ module Bot.Component (
     Botable (..)
 ,   BotComponent (..)
 ,   BotState (..)
-,   Bot
-,   ircWrite
-,   ircReply
-,   ircReplyTo
+,   Bot (..)
 )   where
 
 import Control.Applicative
@@ -29,13 +26,13 @@ class Botable a where
 -- | A type that wraps Botable types.
 -- This type is necessary for making the types work out when storing
 -- heterogeneous Botable types in the same collection.
-data BotComponent = forall a . Botable a => MkBotable a
+data BotComponent = forall a . Botable a => MkBotComponent a
 
 -- Make `BotComponent` an instance of Botable such that it recursively attempts
 -- to process the line as the inner Botable value.
 instance Botable BotComponent where
-    process line (MkBotable a)  =   liftM MkBotable 
-                                $   process line a `asTypeOf` return a
+    process line (MkBotComponent a) =   liftM MkBotComponent 
+                                    $   process line a `asTypeOf` return a
 
 -- | The internal state of the IRC Bot
 data BotState = BotState { 
@@ -49,20 +46,4 @@ data BotState = BotState {
 
 -- | A type synonym for the Bot monad.
 type Bot a = StateT BotState IO a
-
--- | Write a `String` message to IRC.
-ircWrite :: String -> String -> Bot ()
-ircWrite command message = do
-	handle  <-  gets socket
-	liftIO  $   hPrintf handle "%s %s\r\n" command message
-	        >>  printf "> %s %s\n" command message
-
--- | Send a message to the current channel or nick.
-ircReply :: String -> Bot ()
-ircReply message    =   gets currentChannel 
-                    >>= ircReplyTo message
-
--- | Send a message to a specific channel or nick.
-ircReplyTo :: String -> String -> Bot ()
-ircReplyTo channel message = ircWrite "PRIVMSG" (channel ++ " :" ++ message)
 

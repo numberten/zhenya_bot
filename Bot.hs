@@ -1,5 +1,4 @@
 {-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 module Bot (
     Botable (..)
@@ -10,10 +9,10 @@ module Bot (
 ,   defaultBotConfig
 ,   withComponents
 ,   runBot
-,   ircWrite
 )   where
 
 import Bot.Component
+import Bot.IO
 
 import Control.Applicative
 import Control.Monad
@@ -87,7 +86,7 @@ runBot BotConfig{..}    =   connect
         init cfgComponents = do
             ircWrite "NICK" cfgNick
             ircWrite "USER" $ cfgNick ++ " 0 * :Greatest Guys bot"
-            mapM (ircWrite "JOIN") cfgChannel
+            mapM_ (ircWrite "JOIN") cfgChannel
             components  <-  sequence cfgComponents
             modify $ \s -> s { components }
 
@@ -99,13 +98,15 @@ runBot BotConfig{..}    =   connect
                 $   \e  ->  liftIO (print e)
                         >>  modify (\s -> s {exitCode = Just $ ExitFailure 1})
             -- Continue to loop if there is no exit code, other wise stop.
-            get >>= return . (return <$>) . void . exitCode >>= fromMaybe loop
+            liftM ((return <$>) . void . exitCode) get >>= fromMaybe loop
         
         -- Read a message from IRC and process it with each of the registered
         -- components
         runComponents :: Bot ()
         runComponents = do
             message     <-  ircRead
+            -- TODO: add a second catchError wrapper here so that one crappy
+            -- component doesn't bring down the entire bot
             components  <-  gets components 
                         >>= mapM (process message)
             modify $ \s -> s { components }
@@ -118,6 +119,8 @@ ircRead :: Bot String
 ircRead = do
 	handle  <-  gets socket
 	message <- init <$> liftIO (hGetLine handle)
+	-- force the update of the currentChannel in the BotState
+	message `onPrivMsg` \_ -> return ()
 	liftIO $ printf "< %s\n" message
 	return message
 
