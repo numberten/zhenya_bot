@@ -3,15 +3,13 @@ module Bot.Component (
     Botable (..)
 ,   BotComponent (..)
 ,   BotState (..)
-,   Bot (..)
+,   Bot
 )   where
 
-import Control.Applicative
 import Control.Monad
 import Control.Monad.State
 import System.Exit
 import System.IO
-import Text.Printf
 
 -- | A type class for wrapping bot functionality. 
 -- The idea is that each distinct piece of functionality would have it's own

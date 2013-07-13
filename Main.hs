@@ -50,5 +50,6 @@ main = do
         ,   cfgChannel  = nub channelFlag
         ,   cfgNick     = nickFlag
         } `withComponents` [
+            simpleCommand "!test" (ircReply "TESTING!!!!")
         ]
 

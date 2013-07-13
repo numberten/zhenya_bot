@@ -22,7 +22,6 @@ import Data.Maybe
 import Network
 import System.Exit
 import System.IO
-import System.Time
 import Text.Printf
 
 -- | The configuration used to initialize an instance of a chat bot.

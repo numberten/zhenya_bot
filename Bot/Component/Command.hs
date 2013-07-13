@@ -1,30 +1,33 @@
 module Bot.Component.Command (
-    SimpleCommand
+    Command
 ,   simpleCommand
+,   command
 )   where
 
 import Bot.Component
 import Bot.IO
 
-import Control.Monad.State
+-- | A `Command` is an action that is triggered when the first word of a message
+-- is equal to a given string.
+newtype Command = Command (String, [String] -> Bot ())
 
--- | A `SimpleCommand` is an action that is triggered on  
-newtype SimpleCommand = SimpleCommand (String, Bot ())
-
-instance Botable SimpleCommand where
-    process message component@(SimpleCommand (command,action)) 
-        =   message `onPrivMsg` doAction 
+instance Botable Command where
+    process message component@(Command (trigger,action)) 
+        =   message `onPrivMsg` (doAction . words)
         >>  return component
         where
-            doAction message
-                | message == command    = action
-                | otherwise             = liftIO $ putStrLn ("NOT COMMAND!: " ++ message)
+            doAction (first:args)   | first == trigger  = action args
+                                    | otherwise         = return ()
+            doAction _                                  = return ()
 
--- | You should not instantiate a SimpleCommand using the type constructor.
--- Instead you should use this method because it automatically handles
--- converting it to a `Bot BotComponent`
+-- | A convenience function that wraps `command` for commands that don't need to
+-- take arguments.
 simpleCommand :: String -> Bot () -> Bot BotComponent
-simpleCommand command action    =   return 
-                                $   MkBotComponent
-                                $   SimpleCommand (command,action)
+simpleCommand trigger action = command trigger (\_ -> action)
+
+-- | Create a command `BotComponent` for a command that requires arguments.
+command :: String -> ([String] -> Bot ()) -> Bot BotComponent
+command command action  =   return 
+                        $   MkBotComponent
+                        $   Command (command, action)
 

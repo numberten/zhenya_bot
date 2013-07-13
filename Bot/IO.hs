@@ -27,7 +27,8 @@ ircReply message    =   gets currentChannel
 ircReplyTo :: String -> String -> Bot ()
 ircReplyTo channel message = ircWrite "PRIVMSG" (channel ++ " :" ++ message)
 
--- | Filters out IRC messages that are not PRIVMSG's.
+-- | Filters out IRC messages that are not PRIVMSG's. In the event of a PRIVMSG,
+-- the relevant part of the message is passed to the action function.
 onPrivMsg :: String -> (String -> Bot ()) -> Bot ()
 onPrivMsg rawMessage action = 
     case words rawMessage of
