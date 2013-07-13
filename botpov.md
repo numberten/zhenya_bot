@@ -20,9 +20,9 @@ PING :crafting\.dangerbear\.in
 
 :willcoster\!willcoster@i\.love\.debian\.org PRIVMSG \#greatestguys :yo, what does the clean method do in listen?
 
-:jesse\!~jesse@ada\.evergreen\.edu PRIVMSG \#greatestguys :it removes all the chars up to the second \':\'
+:jesse\!~jesse@ada\.evergreen\.edu PRIVMSG \#greatestguys :it removes all the chars up to the second ':'
 
-*:jesse\!~jesse@ada\.evergreen\.edu PRIVMSG \#greatestguys :this is what output looks like from zhenya\_bot\'s pov*
+*:jesse\!~jesse@ada\.evergreen\.edu PRIVMSG \#greatestguys :this is what output looks like from zhenya\_bot's pov*
 
 :jesse\!~jesse@ada\.evergreen\.edu PRIVMSG \#greatestguys ::willcoster\!willcoster@i\.love\.debian\.org PRIVMSG \#greatestguys :yo, what does the clean method do in listen?
 
@@ -60,7 +60,7 @@ PING :crafting\.dangerbear\.in
 
 :jesse\!~jesse@ada\.evergreen\.edu PRIVMSG \#greatestguys :privmsg <channel>
 
-:jesse\!~jesse@ada\.evergreen\.edu PRIVMSG \#greatestguys :for private tells <channel> is the person\'s nick
+:jesse\!~jesse@ada\.evergreen\.edu PRIVMSG \#greatestguys :for private tells <channel> is the person's nick
 
 :jesse\!~jesse@ada\.evergreen\.edu PRIVMSG \#greatestguys :for channel tells <channel> is \#<channel name>
 
