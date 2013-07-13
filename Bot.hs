@@ -50,13 +50,8 @@ data BotConfig = BotConfig {
         cfgServer      :: String
     ,   cfgPort        :: Int
     ,   cfgNick        :: String
-    ,   cfgChannel     :: String
-    -- TODO: Would really like this to be a [Bot BotComponent] instead of IO
-    -- because it would allow for the use of nifty things like ircWrite during
-    -- initializtion. The problem is that in connect, cfgComponents must be
-    -- sequenced before the BotState can be created, and the BotState is
-    -- required to create a valid Bot context.
-    ,   cfgComponents  :: [IO BotComponent]
+    ,   cfgChannel     :: [String]
+    ,   cfgComponents  :: [Bot BotComponent]
 }
 
 -- | The internal state of the IRC Bot
@@ -77,7 +72,7 @@ defaultBotConfig = BotConfig {
         cfgServer       = "localhost"
     ,   cfgPort         = 6667
     ,   cfgNick         = "IRCBot"
-    ,   cfgChannel      = "#robotz"
+    ,   cfgChannel      = []
     ,   cfgComponents   = []
 }
 
@@ -88,7 +83,7 @@ defaultBotConfig = BotConfig {
 -- >        component1
 -- >    ,   component2
 -- > ]
-withComponents  :: BotConfig -> [IO BotComponent] -> BotConfig
+withComponents  :: BotConfig -> [Bot BotComponent] -> BotConfig
 withComponents cfg additional = cfg {
         cfgComponents = cfgComponents cfg ++ additional
     }
@@ -96,19 +91,20 @@ withComponents cfg additional = cfg {
 -- | Launch the IRC bot.
 runBot :: BotConfig -> IO ()
 runBot BotConfig{..}    =   connect
-                        >>= execStateT (init >> loop)
+                        >>= execStateT (init cfgComponents >> loop)
                         >>= disconnect
     where
         -- Connect to the server and create the resulting `BotState`
         connect = do
             socket      <-  connectTo cfgServer 
                         $   PortNumber (fromIntegral cfgPort)
-            components  <-  sequence cfgComponents
             hSetBuffering socket NoBuffering
             return BotState {
                     socket
-                ,   components 
                 ,   exitCode    = Nothing
+                -- We will update the components in the init method so that they
+                -- can be evaluated within the Bot monad
+                ,   components  = []
             }
 
         -- Close the socket and return with the desired exit code.
@@ -117,11 +113,13 @@ runBot BotConfig{..}    =   connect
             exitWith $ fromMaybe ExitSuccess exitCode
 
         -- Connect to the desired channels, and set up the nick
-        init :: Bot ()
-        init = do
+        init :: [Bot BotComponent] -> Bot ()
+        init cfgComponents = do
             ircWrite "NICK" cfgNick
             ircWrite "USER" $ cfgNick ++ " 0 * :Greatest Guys bot"
-            ircWrite "JOIN" cfgChannel
+            mapM (ircWrite "JOIN") cfgChannel
+            components  <-  sequence cfgComponents
+            modify $ \s -> s { components }
 
         -- Grab messages off IRC and pass them to various `BotComponent`s
         loop :: Bot ()
