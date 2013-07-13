@@ -36,4 +36,25 @@ WHOIS
    - **Sending a WHOIS request**
       -  > WHOIS  graham
 
+JOIN
+----
+   - **Nick JOINs channel**
+      - :jesse\_\!jesse@i\.love\.debian\.org JOIN :\#greatestguys
+   - **Joining a channel**
+      -  :zhenya\_bot\!zhenya\_bot@i\.love\.debian\.org JOIN :\#greatestguys   
+         :crafting\.dangerbear\.in 332 zhenya_bot \#greatestguys :https://www\.youtube\.com/watch\?feature=player\_embedded&v=fHfip4DefG4   
+         :crafting\.dangerbear\.in 333 zhenya\_bot \#greatestguys jesse\!~jesse@ada\.evergreen\.edu 1373606075    
+         :crafting\.dangerbear\.in 353 zhenya_bot = \#greatestguys :zhenya\_bot @jesse graham   
+         :crafting.dangerbear.in 366 zhenya_bot \#greatestguys :End of /NAMES list\.   
+
+QUIT
+----
+   - **Examples of nicks quitting channel**
+      - :Cosmo\!cf729986@ircip1\.mibbit\.com QUIT :Quit: http://www\.mibbit\.com ajax IRC Client
+      - :willcoster\!willcoster@i\.love\.debian\.org QUIT :Ping timeout: 600 second
+      - :jesse\_\!jesse@i\.love\.debian\.org QUIT :Quit: leaving
+
+
+
+
 
