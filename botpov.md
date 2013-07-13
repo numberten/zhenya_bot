@@ -20,19 +20,19 @@ MODE
    - **MODE +o'ing a nick**
       - :jesse\!~jesse@ada\.evergreen\.edu MODE \#greatestguys \+o willcoster
    - **MODE -o'ing a nick**
-      - :jesse!~jesse@ada.evergreen.edu MODE #greatestguys -o willcoster
+      - :jesse\!~jesse@ada\.evergreen.edu MODE \#greatestguys \-o willcoster
    - **Sending a MODE**
-      - > MODE #greatestguys +o jesse
+      - > MODE \#greatestguys \+o jesse
 
 WHOIS
 -----
    - **WHOIS'ing a nick**
-      -  :crafting\.dangerbear\.in 311 zhenya\_bot graham ec2\-user i\.love\.debian\.org \* :EC2 Default User
-         :crafting\.dangerbear\.in 319 zhenya\_bot graham :\#greatestguys
-         :crafting\.dangerbear\.in 312 zhenya\_bot graham crafting\.dangerbear\.in :ircd\-hybrid 7\.2\-debian
-         :crafting\.dangerbear\.in 338 zhenya\_bot graham 255\.255\.255\.255 :actually using host
-         :crafting\.dangerbear\.in 317 zhenya\_bot graham 8299 1373237355 :seconds idle, signon time*
-         :crafting\.dangerbear\.in 318 zhenya\_bot graham :End of /WHOIS list\.
+      -  :crafting\.dangerbear\.in 311 zhenya\_bot graham ec2\-user i\.love\.debian\.org \* :EC2 Default User\n
+         :crafting\.dangerbear\.in 319 zhenya\_bot graham :\#greatestguys\n
+         :crafting\.dangerbear\.in 312 zhenya\_bot graham crafting\.dangerbear\.in :ircd\-hybrid 7\.2\-debian\n
+         :crafting\.dangerbear\.in 338 zhenya\_bot graham 255\.255\.255\.255 :actually using host\n
+         :crafting\.dangerbear\.in 317 zhenya\_bot graham 8299 1373237355 :seconds idle, signon time\n
+         :crafting\.dangerbear\.in 318 zhenya\_bot graham :End of /WHOIS list\.\n
    - **Sending a WHOIS request**
       -  > WHOIS  graham
 
