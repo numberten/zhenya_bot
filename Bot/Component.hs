@@ -4,6 +4,7 @@ module Bot.Component (
 ,   BotComponent (..)
 ,   BotState (..)
 ,   Bot
+,   mkComponent
 )   where
 
 import Control.Monad
@@ -43,5 +44,10 @@ data BotState = BotState {
 }
 
 -- | A type synonym for the Bot monad.
-type Bot a = StateT BotState IO a
+type Bot = StateT BotState IO
+
+-- | Takes a `Botable` type and creates a `Bot BotComponent` that can be used
+-- with `withComponents`.
+mkComponent :: forall b . Botable b => b -> Bot BotComponent
+mkComponent botable = return $ MkBotComponent botable
 

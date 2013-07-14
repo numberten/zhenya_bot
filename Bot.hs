@@ -43,9 +43,10 @@ defaultBotConfig = BotConfig {
     ,   cfgComponents   = []
 }
 
--- | There are some components in the defaultBotConfig that probably should not
+-- | There are some components in the `defaultBotConfig` that probably should not
 -- be taken out. This function exists to make the process of adding new
 -- components easier:
+--
 -- > defaultBotConfig `withComponents` [
 -- >        component1
 -- >    ,   component2
@@ -119,7 +120,7 @@ ircRead = do
 	handle  <-  gets socket
 	message <- init <$> liftIO (hGetLine handle)
 	-- force the update of the currentChannel in the BotState
-	message `onPrivMsg` \_ -> return ()
+	(\_ -> return ()) `onPrivMsg` message
 	liftIO $ printf "< %s\n" message
 	return message
 
