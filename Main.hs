@@ -5,6 +5,7 @@ import Bot
 import Bot.Component.Command
 import Bot.Component.Fuzzy
 import Bot.Component.Impl.Uptime
+import Bot.Component.Impl.Roll
 import Bot.IO
 
 import Data.List
@@ -52,12 +53,16 @@ main = do
         ,   cfgChannel  = nub channelFlag
         ,   cfgNick     = nickFlag
         } `withComponents` [
-            simpleCommand "!test" (ircReply "TESTING!!!!")
-        ,   uptime
+            uptime
+        ,   rollDice
+        ,   command "!id" (ircReply . unwords)
+
         ,   fuzzyMatch "pigups" 0.3 
                 (ircReply "Jolly good pigups, jolly good.") 
+
         ,   fuzzyMatch "you can't dry a bug!" 0.5
                 (ircReply "Noted.") 
+
         ,   fuzzyMatch "cheap meat" 0.2 
                 (ircReply "Can we go to DQ?") 
         ]
