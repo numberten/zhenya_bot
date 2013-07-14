@@ -39,6 +39,7 @@ data BotState = BotState {
     -- | If this value is not Nothing, then the bot will exit with the given
     -- `ExitCode`
     ,   exitCode        :: Maybe ExitCode
+    ,   dataDirectory   :: FilePath
     ,   components      :: [BotComponent]
     ,   currentChannel  :: String
     ,   currentNick     :: String

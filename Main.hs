@@ -14,6 +14,7 @@ import Bot.IO
 
 import Data.List
 import System.Console.CmdArgs.Implicit
+import System.Directory
 
 -- | A data type defining the various command line arguments that may be
 -- supplied.
@@ -22,38 +23,50 @@ data Flags = Flags {
     ,   portFlag    ::  Int
     ,   nickFlag    ::  String
     ,   channelFlag ::  [String]
+    ,   dataFlag    ::  FilePath
 } deriving (Data, Typeable, Show)
 
 -- | Declare the default values, help strings and options values for each of the
 -- different flags.
 flagDefinition = Flags {
         serverFlag  =   "crafting.dangerbear.in"
+                    &=  explicit 
                     &=  help "The IRC server to connect to"
-                    &=  opt "server"
+                    &=  name "server"
                     &=  typ "HostName"
     ,   portFlag    =   6667
+                    &=  explicit 
                     &=  help "The port on which the IRC server is running"
-                    &=  opt "port"
+                    &=  name "port"
                     &=  typ "PortNumber"
     ,   nickFlag    =   "zhenya_bot"
+                    &=  explicit 
                     &=  help "The nick that the bot should take"
-                    &=  opt "nick"
+                    &=  name "nick"
                     &=  typ "Nick"
     ,   channelFlag =   []
+                    &=  explicit 
                     &=  help "The channel that the bot should join"
-                    &=  opt "channel"
+                    &=  name "channel"
                     &=  typ "Channel"
+    ,   dataFlag    =   "data"
+                    &=  explicit 
+                    &=  help "The directory persistent files should be stored"
+                    &=  name "data"
+                    &=  typ "Directory"
 }   &=  summary "Greatest guys IRC bot"
-    &=  program "bot"
+    &=  program "zhenya_bot"
 
 -- | Grab configuration from the command line, attach appropriate BotComponents
 -- and start the IRC bot.
 main :: IO ()
 main = do
     Flags{..} <-  cmdArgs flagDefinition
+    -- Create a directory for runtime data if one does not already exist
     runBot $ defaultBotConfig {
             cfgServer   = serverFlag
         ,   cfgPort     = portFlag
+        ,   cfgData     = dataFlag
         ,   cfgChannel  = nub channelFlag
         ,   cfgNick     = nickFlag
         } `withComponents` [

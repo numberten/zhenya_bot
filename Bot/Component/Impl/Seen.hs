@@ -27,14 +27,13 @@ instance Show SeenTime where
 
 instance Read SeenTime where
     readsPrec precedence string = do
-        ((a,b), leftOver)   <-  trace ("WORKING OK: " ++ string)
-                            $   readsPrec precedence string
+        ((a,b), leftOver)   <-  readsPrec precedence string
         return (SeenTime $ TOD a b, leftOver)
 
 type TimeMap = M.Map String SeenTime
 
 seen :: Bot BotComponent
-seen = persistent "data/seen.txt" action initialState
+seen = persistent "seen.txt" action initialState
     where
         action          = seenLogger +++ seenCommand
         initialState    = return M.empty

@@ -9,6 +9,7 @@ import Bot.Component
 
 import Control.Monad.State
 import Control.Monad.Error
+import System.FilePath.Posix
 import System.IO
 
 -- TODO: Should this be generalized to be a MonadTrans?
@@ -40,6 +41,10 @@ persistent  ::  (Show s, Read s, Eq s)
             ->  Bot BotComponent
 persistent saveFile action initialState = stateful action' initialState'
     where
+        fullSavePath = do
+            directory   <-  gets dataDirectory
+            return (directory </> saveFile)
+
         -- Perform the action, but also save the state to disk if the state has
         -- changed.
         action' message = do
@@ -48,14 +53,15 @@ persistent saveFile action initialState = stateful action' initialState'
             get >>= flip when saveState . (oldState /=)
 
         saveState = do
-            state <- get
-            liftIO $ withFile saveFile WriteMode (`hPrint` state)
+            state       <-  get
+            fileName    <-  lift fullSavePath
+            liftIO $ withFile fileName WriteMode (`hPrint` state)
 
         -- Attempt to read the state from disk. If unsuccessful use the supplied
         -- initialState.
-        initialState'   =   liftIO (withFile saveFile ReadMode loadFile)
-                            `catchError`
-                            const initialState
+        initialState' = do 
+            fileName    <-  fullSavePath
+            liftIO (withFile fileName ReadMode loadFile) `catchError` const initialState
 
         loadFile handle = do
             contents <- hGetContents handle

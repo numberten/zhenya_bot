@@ -1,0 +1,21 @@
+Name:           ZhenyaBot
+Version:        1.0
+Cabal-Version:  >= 1.2
+Author:         Jesse Frankley, Will Coster
+Homepage:       https://github.com/numberten/zhenya_bot
+Category:       Network
+Synopsis:       An IRC bot with a passion for nonsense.
+Build-Type:     Simple
+
+Executable zhenya_bot
+    Main-Is:        Main.hs
+    Build-Depends:  base
+                 ,  cmdargs         >=  0.9
+                 ,  containers      >=  0.4
+                 ,  directory       >=  1.1
+                 ,  filepath        >=  1.3
+                 ,  mtl             >=  2.0
+                 ,  network         >=  2.3
+                 ,  old-time        >=  1.1
+                 ,  random          >=  1.0
+                 ,  transformers    >=  0.2

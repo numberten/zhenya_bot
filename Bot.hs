@@ -23,6 +23,7 @@ import Control.Monad.State
 import Data.Maybe
 import Network
 import System.Exit
+import System.Directory
 import System.IO
 import Text.Printf
 
@@ -30,6 +31,7 @@ import Text.Printf
 data BotConfig = BotConfig {
         cfgServer      :: String
     ,   cfgPort        :: Int
+    ,   cfgData        :: String
     ,   cfgNick        :: String
     ,   cfgChannel     :: [String]
     ,   cfgComponents  :: [Bot BotComponent]
@@ -40,6 +42,7 @@ data BotConfig = BotConfig {
 defaultBotConfig = BotConfig {
         cfgServer       = "localhost"
     ,   cfgPort         = 6667
+    ,   cfgData         = "data"
     ,   cfgNick         = "IRCBot"
     ,   cfgChannel      = []
     ,   cfgComponents   = [
@@ -69,6 +72,7 @@ runBot BotConfig{..}    =   connect
     where
         -- Connect to the server and create the resulting `BotState`
         connect = do
+            createDirectoryIfMissing True cfgData
             socket      <-  connectTo cfgServer 
                         $   PortNumber (fromIntegral cfgPort)
             hSetBuffering socket NoBuffering
@@ -77,6 +81,7 @@ runBot BotConfig{..}    =   connect
                 ,   exitCode        = Nothing
                 ,   currentNick     = ""
                 ,   currentChannel  = ""
+                ,   dataDirectory   = cfgData
                 -- We will update the components in the init method so that they
                 -- can be evaluated within the Bot monad
                 ,   components      = []

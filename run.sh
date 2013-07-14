@@ -8,7 +8,8 @@ cd $DIR
 
 # Run the bot and save the exit status. The exit status determines if the bot is
 # restarted, updated or simply terminated.
-ghc -o bot Main.hs && ./bot $@
+BOTPATH='./dist/build/zhenya_bot/zhenya_bot'
+cabal configure --disable-executable-profiling && cabal build && $BOTPATH $@
 status=`echo -n $?`
 if [ "$status" == 0 ]; then
     echo "Stopping..."
