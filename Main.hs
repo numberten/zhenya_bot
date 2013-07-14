@@ -3,6 +3,7 @@
 {-# LANGUAGE RecordWildCards #-}
 import Bot
 import Bot.Component.Command
+import Bot.Component.Conditional
 import Bot.Component.Fuzzy
 import Bot.Component.Impl.Uptime
 import Bot.Component.Impl.Roll
@@ -56,6 +57,7 @@ main = do
             uptime
         ,   rollDice
         ,   command "!id" (ircReply . unwords)
+        ,   conditional (nickFlag `isPrefixOf`) (ircReply "hm?") 
 
         ,   fuzzyMatch "pigups" 0.3 
                 (ircReply "Jolly good pigups, jolly good.") 

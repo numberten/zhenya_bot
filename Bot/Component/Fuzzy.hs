@@ -4,10 +4,9 @@ module Bot.Component.Fuzzy (
 )   where
 
 import Bot.Component
+import Bot.Component.Conditional
 import Bot.Component.Function()
-import Bot.IO
 
-import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Trans.Identity
 import Data.Char
@@ -35,9 +34,7 @@ fuzzyMatchT ::  (MonadTrans t, Monad (t Bot))
             ->  t Bot () 
             -- | Resulting Botable method
             ->  String -> t Bot ()
-fuzzyMatchT target threshold action =   onPrivMsgT 
-                                    $   flip when action 
-                                    .   (match target threshold)
+fuzzyMatchT target threshold = conditionalT (match target threshold)
 
 
 -- | Determines if two strings match based on their edit distance.

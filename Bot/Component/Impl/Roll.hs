@@ -6,6 +6,7 @@ import Bot.Component
 import Bot.Component.Command
 import Bot.IO
 
+import Control.Monad
 import Control.Monad.Trans
 import Data.Char
 import System.Random
@@ -19,6 +20,6 @@ rollDice = command "!roll" rollAction
 
 randomI :: String -> Bot String
 randomI []  =   return "Pigup Pigup Pigup"
-randomI i   =   liftIO (fmap (randomR (1, (read i :: Int))) newStdGen) 
-            >>= (\x -> return $ show $ fst x) 
+randomI i   =   liftM (show . fst) 
+            $   liftIO (fmap (randomR (1, read i :: Int)) newStdGen) 
 
