@@ -10,7 +10,6 @@ cd $DIR
 # restarted, updated or simply terminated.
 ghc -o bot Main.hs && ./bot $@
 status=`echo -n $?`
-echo $status
 if [ "$status" == 0 ]; then
     echo "Stopping..."
     exit 0

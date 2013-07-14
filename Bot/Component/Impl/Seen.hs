@@ -43,7 +43,7 @@ seenCommandAction (nick:_)  = do
         Just lastSeen   -> do
             now         <-  liftIO getClockTime
             let diff    =   pretty $ diffClockTimes now lastSeen
-            lift $ ircReply $ "I last saw them speak " ++ diff ++ "ago."
+            lift $ ircReply $ "I last saw them speak " ++ diff ++ " ago."
         Nothing         ->  
             lift $ ircReply "I have not seen them speak."
 seenCommandAction _         =   return ()
