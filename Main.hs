@@ -3,6 +3,7 @@
 {-# LANGUAGE RecordWildCards #-}
 import Bot
 import Bot.Component.Command
+import Bot.Component.Fuzzy
 import Bot.Component.Impl.Uptime
 import Bot.IO
 
@@ -53,5 +54,11 @@ main = do
         } `withComponents` [
             simpleCommand "!test" (ircReply "TESTING!!!!")
         ,   uptime
+        ,   fuzzyMatch "pigups" 0.3 
+                (ircReply "Jolly good pigups, jolly good.") 
+        ,   fuzzyMatch "you can't dry a bug!" 0.5
+                (ircReply "Noted.") 
+        ,   fuzzyMatch "cheap meat" 0.2 
+                (ircReply "Can we go to DQ?") 
         ]
 
