@@ -3,6 +3,7 @@
 {-# LANGUAGE RecordWildCards #-}
 import Bot
 import Bot.Component.Command
+import Bot.Component.Impl.Uptime
 import Bot.IO
 
 import Data.List
@@ -51,5 +52,6 @@ main = do
         ,   cfgNick     = nickFlag
         } `withComponents` [
             simpleCommand "!test" (ircReply "TESTING!!!!")
+        ,   uptime
         ]
 

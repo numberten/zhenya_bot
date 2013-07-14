@@ -19,7 +19,7 @@ simpleCommand trigger action = command trigger (\_ -> action)
 
 -- | Create a command `BotComponent` for a command that requires arguments.
 command :: String -> ([String] -> Bot ()) -> Bot BotComponent
-command trigger action = return $ MkBotComponent $ commandT trigger actionT
+command trigger action = mkComponent $ commandT trigger actionT
     where
         actionT :: [String] -> IdentityT Bot ()
         actionT = lift . action

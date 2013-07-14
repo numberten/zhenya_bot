@@ -29,6 +29,8 @@ ircReply message    =   gets currentChannel
 ircReplyTo :: String -> String -> Bot ()
 ircReplyTo channel message = ircWrite "PRIVMSG" (channel ++ " :" ++ message)
 
+-- | Executes the given action on the message portion of PRIVMSG's and do
+-- nothing for other types of IRC messages. 
 onPrivMsg :: (String -> Bot ()) -> String -> Bot ()
 onPrivMsg action = runIdentityT . onPrivMsgT actionT
     where

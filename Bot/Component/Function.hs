@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
 module Bot.Component.Function (
---    FunctionComponent
 )   where
 
 import Bot.Component
