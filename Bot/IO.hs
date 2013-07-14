@@ -39,7 +39,10 @@ onPrivMsg action = runIdentityT . onPrivMsgT actionT
 
 -- | Filters out IRC messages that are not PRIVMSG's. In the event of a PRIVMSG,
 -- the relevant part of the message is passed to the action function.
-onPrivMsgT :: (MonadTrans t, Monad (t Bot)) => (String -> t Bot ()) -> String -> t Bot ()
+onPrivMsgT  ::  (MonadTrans t, Monad (t Bot)) 
+            =>  (String -> t Bot ()) 
+            ->  String 
+            ->  t Bot ()
 onPrivMsgT action rawMessage = 
     case words rawMessage of
         sender:"PRIVMSG":channel:message
@@ -47,10 +50,11 @@ onPrivMsgT action rawMessage =
                 -- If this is a private message, we have to do a little bit of
                 -- work to extract the nick of the person who just sent us the
                 -- message.
-                let currentChannel = if head channel == '#'
+                let currentNick     =   drop 1 $ takeWhile (/= '!') sender
+                let currentChannel  = if head channel == '#'
                                         then channel 
-                                        else drop 1 $ takeWhile (/= '!') sender
-                lift $ modify (\s -> s { currentChannel  })
+                                        else currentNick
+                lift $ modify (\s -> s {currentChannel, currentNick})
                 action (drop 1 $ unwords message)
         _   ->  return ()
 

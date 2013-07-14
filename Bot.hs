@@ -73,6 +73,7 @@ runBot BotConfig{..}    =   connect
             return BotState {
                     socket
                 ,   exitCode        = Nothing
+                ,   currentNick     = ""
                 ,   currentChannel  = ""
                 -- We will update the components in the init method so that they
                 -- can be evaluated within the Bot monad

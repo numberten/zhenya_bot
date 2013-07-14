@@ -7,6 +7,7 @@ import Bot.Component.Conditional
 import Bot.Component.Fuzzy
 import Bot.Component.Impl.Uptime
 import Bot.Component.Impl.Roll
+import Bot.Component.Impl.Op
 import Bot.IO
 
 import Data.List
@@ -56,6 +57,7 @@ main = do
         } `withComponents` [
             uptime
         ,   rollDice
+        ,   grantOps
         ,   command "!id" (ircReply . unwords)
         ,   conditional (nickFlag `isPrefixOf`) (ircReply "hm?") 
 
