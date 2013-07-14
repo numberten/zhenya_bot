@@ -5,9 +5,11 @@ import Bot
 import Bot.Component.Command
 import Bot.Component.Conditional
 import Bot.Component.Fuzzy
-import Bot.Component.Impl.Uptime
-import Bot.Component.Impl.Roll
+import Bot.Component.Impl.Goodbye
 import Bot.Component.Impl.Op
+import Bot.Component.Impl.Roll
+import Bot.Component.Impl.Uptime
+import Bot.Component.Impl.Seen
 import Bot.IO
 
 import Data.List
@@ -55,10 +57,14 @@ main = do
         ,   cfgChannel  = nub channelFlag
         ,   cfgNick     = nickFlag
         } `withComponents` [
-            uptime
+            grantOps
         ,   rollDice
-        ,   grantOps
+        ,   sayGoodbye
+        ,   seen
+        ,   uptime
+
         ,   command "!id" (ircReply . unwords)
+
         ,   conditional (nickFlag `isPrefixOf`) (ircReply "hm?") 
 
         ,   fuzzyMatch "pigups" 0.3 

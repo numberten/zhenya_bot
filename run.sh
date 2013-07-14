@@ -8,7 +8,7 @@ cd $DIR
 
 # Run the bot and save the exit status. The exit status determines if the bot is
 # restarted, updated or simply terminated.
-ghc bot.hs && ./bot
+ghc -o bot Main.hs && ./bot $@
 status=`echo -n $?`
 echo $status
 if [ "$status" == 0 ]; then
@@ -16,11 +16,11 @@ if [ "$status" == 0 ]; then
     exit 0
 elif [ "$status" == 100 ]; then
     echo "Restarting..."
-    $DIR/run.sh
+    $DIR/run.sh $@
 elif [ "$status" == 101 ]; then
     echo "Updating..."
     git pull
-    $DIR/run.sh
+    $DIR/run.sh $@
 # There were likely syntax errors. In this case, simply exit.
 else
     exit $status

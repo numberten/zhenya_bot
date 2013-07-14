@@ -47,10 +47,10 @@ onPrivMsgT action rawMessage =
     case words rawMessage of
         sender:"PRIVMSG":channel:message
             ->  do
+                let currentNick     =   drop 1 $ takeWhile (/= '!') sender
                 -- If this is a private message, we have to do a little bit of
                 -- work to extract the nick of the person who just sent us the
                 -- message.
-                let currentNick     =   drop 1 $ takeWhile (/= '!') sender
                 let currentChannel  = if head channel == '#'
                                         then channel 
                                         else currentNick

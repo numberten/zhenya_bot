@@ -13,6 +13,7 @@ module Bot (
 
 import Bot.Component
 import Bot.Component.Impl.PingPong
+import Bot.Component.Impl.Reboot
 import Bot.IO
 
 import Control.Applicative
@@ -43,6 +44,7 @@ defaultBotConfig = BotConfig {
     ,   cfgChannel      = []
     ,   cfgComponents   = [
             pingPong
+        ,   reboot
     ]
 }
 
