@@ -12,6 +12,7 @@ module Bot (
 )   where
 
 import Bot.Component
+import Bot.Component.Impl.PingPong
 import Bot.IO
 
 import Control.Applicative
@@ -40,7 +41,9 @@ defaultBotConfig = BotConfig {
     ,   cfgPort         = 6667
     ,   cfgNick         = "IRCBot"
     ,   cfgChannel      = []
-    ,   cfgComponents   = []
+    ,   cfgComponents   = [
+            pingPong
+    ]
 }
 
 -- | There are some components in the `defaultBotConfig` that probably should not
