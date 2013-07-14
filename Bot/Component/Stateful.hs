@@ -10,7 +10,8 @@ import Bot.Component
 import Control.Monad.State
 import Control.Monad.Error
 import System.FilePath.Posix
-import System.IO
+import System.IO hiding (hGetContents)
+import System.IO.Strict (hGetContents)
 
 -- TODO: Should this be generalized to be a MonadTrans?
 -- It would theoretically be much more flexible, but at the moment I can't think
