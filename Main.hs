@@ -82,16 +82,16 @@ main = do
 
         ,   conditional (nickFlag `isPrefixOf`) (ircReply "hm?") 
 
-        ,   fuzzyMatch "pigups" 0.3 
+        ,   fuzzyMatch "pigups" 0.1 
                 (ircReply "Jolly good pigups, jolly good.") 
 
-        ,   fuzzyMatch "you can't dry a bug!" 0.5
+        ,   fuzzyMatch "you can't dry a bug!" 0.2
                 (ircReply "Noted.") 
 
         ,   fuzzyMatch "cheap meat" 0.2 
                 (ircReply "Can we go to DQ?") 
 
-        ,   fuzzyMatch "I'd expect it." 0.4
+        ,   fuzzyMatch "I'd expect it." 0.2
                 (ircReply "me too")
         ]
 
