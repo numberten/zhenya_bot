@@ -89,7 +89,7 @@ main = do
         ,   fuzzyMatch "cheap meat" 0.2 
                 (ircReply "Can we go to DQ?") 
 
-        ,   fuzzyMatch "I'd expect it." 0.6
+        ,   fuzzyMatch "I'd expect it." 0.8
                 (ircReply "me too")
         ]
 
