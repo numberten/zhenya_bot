@@ -10,6 +10,7 @@ import Bot.Component.Impl.Op
 import Bot.Component.Impl.Roll
 import Bot.Component.Impl.Uptime
 import Bot.Component.Impl.Seen
+import Bot.Component.Impl.Loop
 import Bot.IO
 
 import Data.List
@@ -75,6 +76,7 @@ main = do
         ,   sayGoodbye
         ,   seen
         ,   uptime
+        ,   baconLoop
 
         ,   command "!id" (ircReply . unwords)
 
