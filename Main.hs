@@ -40,7 +40,7 @@ flagDefinition = Flags {
                     &=  help "The port on which the IRC server is running"
                     &=  name "port"
                     &=  typ "PortNumber"
-    ,   nickFlag    =   "zhenya_bot_test"
+    ,   nickFlag    =   "zhenya_bot"
                     &=  explicit 
                     &=  help "The nick that the bot should take"
                     &=  name "nick"
@@ -76,7 +76,7 @@ main = do
         ,   sayGoodbye
         ,   seen
         ,   uptime
-        ,   baconLoop
+--      ,   baconLoop  --Functional, but spammy.
 
         ,   command "!id" (ircReply . unwords)
 

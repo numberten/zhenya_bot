@@ -1,31 +1,36 @@
 {-# LANGUAGE RecordWildCards #-}
 module Bot.Component.Timer (
-      TimerComponent(..)
+      timerComponent
    )  where
 
 import Bot.Component
+import Bot.Component.Stateful
 import Control.Monad.State
 import System.Time
 
-data TimerComponent = TimerComponent {
-         lastFire :: ClockTime      --Time that action was last fired.
-      ,  delay    :: Integer        --Delay between actions, in seconds.
-      ,  state    :: StateT ClockTime Bot ()
-}
-
-instance Botable TimerComponent where
-      process _ TimerComponent{..} = action
-         where
-            action :: Bot TimerComponent
-            action   = do
-                           now <- liftIO getClockTime
-                           if predicate (timeDiffStr now lastFire) delay
-                              then do
-                                 lastFire <- liftIO getClockTime
-                                 execStateT state now
-                                 return TimerComponent{..}
-                              else return TimerComponent{..}
-            timeDiffStr t1 t2 = timeDiffToString . diffClockTimes t1 $ t2
-            predicate "" _ = False
-            predicate dt d = (read . takeWhile (/=' ') $ dt) >= d
+         -- | `timerComponent` wraps the `StatefulComponent` with a specific state,
+         -- |  as well as an explicit timer check used to propagate actions.
+timerComponent :: (String 
+               -> StateT (Integer,ClockTime) Bot ()) 
+               -> Bot (Integer,ClockTime) 
+               -> Bot BotComponent
+timerComponent action initialState = stateful action' initialState
+      where
+            action' message = do
+                              (delay, lastFire)  <- get
+                              now <- liftIO getClockTime
+                              if predicate (timeSince now lastFire) delay
+                                 then do
+                                    lastFire <- liftIO getClockTime
+                                    action message
+                                    put (delay, lastFire)
+                                 else do
+                                    state <- get
+                                    put state
+                                 
+         -- | Returns a string of the number of seconds between two times.  
+            timeSince past present = timeDiffToString . diffClockTimes past $ present
+         -- | Checks if `timeSince`s time is greater than a given delay.
+            predicate dt d | dt == ""  = False
+                           | otherwise = (>=d) . read . takeWhile (/=' ') $ dt
 

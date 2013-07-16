@@ -7,17 +7,13 @@ import Bot.Component
 import Bot.Component.Command
 import Bot.Component.Timer
 import Bot.IO
-import Debug.Trace
 
 import Control.Monad.State
 import System.Time
 
+-- Component that `ircReply`s "bacon" every 5 seconds.
 baconLoop :: Bot BotComponent
-baconLoop = do
-               initialState <- liftIO getClockTime
-               delay'       <- return 5
-               mkComponent TimerComponent { lastFire = initialState
-                                          , delay    = delay'
-                                          , state    = (simpleCommandT "" $ lift $ ircReply "bacon") ""
-                                          }
-
+baconLoop = timerComponent action initialState
+   where
+      initialState = liftIO $ getClockTime >>= return . (,) 5
+      action = simpleCommandT "" $ lift $ ircReply "bacon"
