@@ -21,7 +21,7 @@ youtube = regex pattern linkHandler
 
         -- Attempt to pull the title of the video and relay it to IRC
         describeLink    =   mapM_ (ircReply . soupToTitle)
-                        .   sections (~== "<span id=\"eow-title\">")
+                        .   sections (~== "<span id=\"eow-title\" title=\"\">")
 
         -- Extract the title text from a bunch of tags
         soupToTitle     =   concat
