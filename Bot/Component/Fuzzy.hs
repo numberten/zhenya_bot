@@ -48,8 +48,9 @@ match ::
         ->  String 
         -- | Whether the strings are a match
         ->  Bool
-match s f input =   fromIntegral (editDistance si $ lcs ni si) 
-                <=  (fromIntegral (length si) * f)
+match s f input   | length input > (4 * length s)  = False
+                  | otherwise                      = fromIntegral (editDistance si $ lcs ni si) 
+                                                   <= (fromIntegral (length si) * f)
     where   
         ni = map toLower . trim isLetter $ input
         si = map toLower . trim isLetter $ s
