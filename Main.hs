@@ -10,11 +10,11 @@ import Bot.Component.Impl.Op
 import Bot.Component.Impl.Roll
 import Bot.Component.Impl.Uptime
 import Bot.Component.Impl.Seen
+import Bot.Component.Impl.Youtube
 import Bot.IO
 
 import Data.List
 import System.Console.CmdArgs.Implicit
-import System.Directory
 
 -- | A data type defining the various command line arguments that may be
 -- supplied.
@@ -75,6 +75,7 @@ main = do
         ,   sayGoodbye
         ,   seen
         ,   uptime
+        ,   youtube
 
         ,   command "!id" (ircReply . unwords)
 
