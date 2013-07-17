@@ -13,7 +13,6 @@ import System.Time
 
 -- Component that `ircReply`s "bacon" every 5 seconds.
 baconLoop :: Bot BotComponent
-baconLoop = timerComponent action initialState
+baconLoop = timerComponent action 
    where
-      initialState = liftIO $ getClockTime >>= return . (,) 5
       action = simpleCommandT "" $ lift $ ircReply "bacon"

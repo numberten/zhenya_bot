@@ -12,10 +12,10 @@ import System.Time
          -- |  as well as an explicit timer check used to propagate actions.
 timerComponent :: (String 
                -> StateT (Integer,ClockTime) Bot ()) 
-               -> Bot (Integer,ClockTime) 
                -> Bot BotComponent
-timerComponent action initialState = stateful action' initialState
+timerComponent action = stateful action' initialState
       where
+            initialState = liftIO $ getClockTime >>= return . (,) 5
             action' message = do
                               (delay, lastFire)  <- get
                               now <- liftIO getClockTime
