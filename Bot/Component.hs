@@ -5,6 +5,7 @@ module Bot.Component (
 ,   BotState (..)
 ,   Bot
 ,   mkComponent
+,   liftIO
 )   where
 
 import Control.Monad
