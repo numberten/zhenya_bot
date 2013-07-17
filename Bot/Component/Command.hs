@@ -1,6 +1,7 @@
 module Bot.Component.Command (
     simpleCommand
 ,   simpleCommandT
+,   emptyCommand
 ,   command
 ,   commandT
 )   where
@@ -24,6 +25,10 @@ command trigger action = mkComponent $ commandT trigger actionT
         actionT :: [String] -> IdentityT Bot ()
         actionT = lift . action
 
+-- | Creates a `BotComponent` that runs its action everytime it's evaluated.
+emptyCommand :: Bot () -> Bot BotComponent
+emptyCommand action = simpleCommand "" action
+
 -- | Similar to `simpleCommand` but allows the action to be wrapped inside of a
 -- monad transformer.
 simpleCommandT  ::  (MonadTrans t, Monad (t Bot)) 
@@ -41,6 +46,7 @@ commandT    ::  (MonadTrans t, Monad (t Bot))
             ->  ([String] -> t Bot ()) 
             -- | The resulting 
             -> String -> t Bot ()
+commandT "" action      = action . words
 commandT trigger action = onPrivMsgT (commandAction . words)
     where
         commandAction (first:args)  |   first == trigger    =   action args

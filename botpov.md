@@ -55,6 +55,6 @@ QUIT
       - :jesse\_\!jesse@i\.love\.debian\.org QUIT :Quit: leaving
 
 
-
+More information on [error](http://www.irchelp.org/irchelp/rfc/chapter6.html).
 
 

@@ -11,6 +11,7 @@ import Bot.Component.Impl.Roll
 import Bot.Component.Impl.Uptime
 import Bot.Component.Impl.Seen
 import Bot.Component.Impl.Youtube
+import Bot.Component.Impl.Loop
 import Bot.IO
 
 import Data.List
@@ -76,21 +77,22 @@ main = do
         ,   seen
         ,   uptime
         ,   youtube
+--      ,   baconLoop  --Functional, but spammy.
 
         ,   command "!id" (ircReply . unwords)
 
         ,   conditional (nickFlag `isPrefixOf`) (ircReply "hm?") 
 
-        ,   fuzzyMatch "pigups" 0.3 
+        ,   fuzzyMatch "pigups" 0.1 
                 (ircReply "Jolly good pigups, jolly good.") 
 
-        ,   fuzzyMatch "you can't dry a bug!" 0.5
+        ,   fuzzyMatch "you can't dry a bug!" 0.2
                 (ircReply "Noted.") 
 
         ,   fuzzyMatch "cheap meat" 0.2 
                 (ircReply "Can we go to DQ?") 
 
-        ,   fuzzyMatch "I'd expect it." 0.7
+        ,   fuzzyMatch "I'd expect it." 0.2
                 (ircReply "me too")
         ]
 

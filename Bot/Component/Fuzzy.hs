@@ -10,6 +10,7 @@ import Bot.Component.Function()
 import Control.Monad.Trans
 import Control.Monad.Trans.Identity
 import Data.Char
+import Data.List.LCS.HuntSzymanski
 
 -- | A fuzzy matching constructor that will execute an action when a message
 -- roughly matches the target string. For more information about parameters see
@@ -47,11 +48,11 @@ match ::
         ->  String 
         -- | Whether the strings are a match
         ->  Bool
-match s f input =   fromIntegral (editDistance ni si) 
+match s f input =   fromIntegral (editDistance si $ lcs ni si) 
                 <=  (fromIntegral (length si) * f)
     where   
         ni = map toLower . trim isLetter $ input
-        si = trim isLetter s
+        si = map toLower . trim isLetter $ s
 
         trim :: (Char -> Bool) -> String -> String
         trim _ ""     = ""
