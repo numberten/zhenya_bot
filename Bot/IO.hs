@@ -41,8 +41,7 @@ onPrivMsg action = runIdentityT . onPrivMsgT actionT
 -- the relevant part of the message is passed to the action function.
 onPrivMsgT  ::  (MonadTrans t, Monad (t Bot)) 
             =>  (String -> t Bot ()) 
-            ->  String 
-            ->  t Bot ()
+            ->  String ->  t Bot ()
 onPrivMsgT action rawMessage = 
     case words rawMessage of
         sender:"PRIVMSG":channel:message
