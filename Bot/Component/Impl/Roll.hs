@@ -7,7 +7,6 @@ import Bot.Component.Command
 import Bot.IO
 
 import Control.Monad
-import Control.Monad.Trans
 import Data.Char
 import System.Random
 

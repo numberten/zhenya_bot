@@ -14,7 +14,6 @@ import              Bot.Time
 import              Control.Applicative
 import              Control.Monad.State
 import qualified    Data.Map as M
-import              Debug.Trace
 import              System.Time
 
 -- | The standard ClockTime definition does not define a Read Instance?? So to
