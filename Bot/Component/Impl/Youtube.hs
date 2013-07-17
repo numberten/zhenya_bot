@@ -6,7 +6,7 @@ import Bot.Component
 import Bot.Component.Regex
 import Bot.IO
 
-import Data.Text (pack, unpack, strip)
+import Control.Monad
 import Network.Curl.Download
 import Text.HTML.TagSoup
 
@@ -24,7 +24,6 @@ youtube = regex pattern linkHandler
                         .   sections (~== "<span id=\"eow-title\">")
 
         -- Extract the title text from a bunch of tags
-        soupToTitle     =   unpack . strip . pack  -- strip whitespace
-                        .   innerText -- render it
-                        .   take 1 -- we only want the first TextTag
-                        .   drop 1 -- drop the open tag
+        soupToTitle     =   concat
+                        .   liftM (fromAttrib "title")
+                        .   take 1
