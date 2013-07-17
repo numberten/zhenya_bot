@@ -13,7 +13,7 @@ import Text.HTML.TagSoup
 youtube :: Bot BotComponent
 youtube = regex pattern linkHandler
     where
-        pattern         = "youtube.com/watch\\?v=[a-zA-Z0-9]*"
+        pattern         = "youtube.com/watch\\?([a-zA-Z]+=[a-zA-Z0-9_#]+&)*v=[a-zA-Z0-9]*"
 
         -- Run for each link that looks like a youtube video
         linkHandler url =   liftIO (openAsTags ("http://www." ++ url))
