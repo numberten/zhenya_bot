@@ -1,10 +1,10 @@
-{-# LANGUAGE RecordWildCards #-}
 module Bot.Component.Timer (
       timerComponent
    )  where
 
 import Bot.Component
 import Bot.Component.Stateful
+import Control.Monad
 import Control.Monad.State
 import System.Time
 
@@ -15,7 +15,7 @@ timerComponent :: (String
                -> Bot BotComponent
 timerComponent action = stateful action' initialState
       where
-            initialState = liftIO $ getClockTime >>= return . (,) 5
+            initialState = liftIO $ liftM ((,) 5) getClockTime
             action' message = do
                               (delay, lastFire)  <- get
                               now <- liftIO getClockTime

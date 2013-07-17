@@ -27,7 +27,7 @@ command trigger action = mkComponent $ commandT trigger actionT
 
 -- | Creates a `BotComponent` that runs its action everytime it's evaluated.
 emptyCommand :: Bot () -> Bot BotComponent
-emptyCommand action = simpleCommand "" action
+emptyCommand = simpleCommand ""
 
 -- | Similar to `simpleCommand` but allows the action to be wrapped inside of a
 -- monad transformer.

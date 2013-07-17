@@ -20,8 +20,6 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Error
 import Control.Monad.State
-import Control.Concurrent.Timer
-import Control.Concurrent.Suspend.Lifted
 
 import Data.Maybe
 import Network

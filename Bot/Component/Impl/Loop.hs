@@ -1,4 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
 module Bot.Component.Impl.Loop (
     baconLoop
 )   where
@@ -9,7 +8,6 @@ import Bot.Component.Timer
 import Bot.IO
 
 import Control.Monad.State
-import System.Time
 
 -- Component that `ircReply`s "bacon" every 5 seconds.
 baconLoop :: Bot BotComponent
