@@ -6,12 +6,12 @@ import Bot.Component.Command
 import Bot.Component.Conditional
 import Bot.Component.Fuzzy
 import Bot.Component.Impl.Goodbye
+import Bot.Component.Impl.NickCluster
 import Bot.Component.Impl.Op
 import Bot.Component.Impl.Roll
 import Bot.Component.Impl.Uptime
 import Bot.Component.Impl.Seen
 import Bot.Component.Impl.Youtube
-import Bot.Component.Impl.Loop
 import Bot.IO
 
 import Data.List
@@ -62,7 +62,8 @@ flagDefinition = Flags {
 -- and start the IRC bot.
 main :: IO ()
 main = do
-    Flags{..} <-  cmdArgs flagDefinition
+    Flags{..}   <-  cmdArgs flagDefinition
+    cnHandle    <-  newClusterNickHandle
     -- Create a directory for runtime data if one does not already exist
     runBot $ defaultBotConfig {
             cfgServer   = serverFlag
@@ -71,13 +72,13 @@ main = do
         ,   cfgChannel  = nub channelFlag
         ,   cfgNick     = nickFlag
         } `withComponents` [
-            grantOps
+            clusterNickService cnHandle 0.3
+        ,   grantOps
         ,   rollDice
         ,   sayGoodbye
         ,   seen
         ,   uptime
         ,   youtube
---      ,   baconLoop  --Functional, but spammy.
 
         ,   command "!id" (ircReply . unwords)
 
