@@ -96,7 +96,7 @@ clusterNickService handle threshold =   liftIO (forkIO startClustering)
             startClustering
             where
                 handler :: SomeException -> IO ()
-                handler = return ()
+                handler = void . return
                 --handler = putStrLn . ("ERROR: NickCluster Error: "++) . show
 
         -- Computes a clustering of all the nicks currently present in the

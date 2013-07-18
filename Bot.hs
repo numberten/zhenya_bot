@@ -18,15 +18,15 @@ import Bot.IO
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Catch
 import Control.Monad.State
-
 import Data.Maybe
 import Network
 import System.Exit
 import System.Directory
 import System.IO
 import Text.Printf
+import Prelude hiding (catch)
 
 -- | The configuration used to initialize an instance of a chat bot.
 data BotConfig = BotConfig {
@@ -105,9 +105,8 @@ runBot BotConfig{..}    =   connect
         -- Grab messages off IRC and pass them to various `BotComponent`s
         loop :: Bot ()
         loop = do
-            catchError
-                    runComponents
-                $   \e  ->  liftIO (print e)
+            catch   runComponents
+                $   \e  ->  liftIO (print (e:: SomeException))
                         >>  modify (\s -> s {exitCode = Just $ ExitFailure 1})
             -- Continue to loop if there is no exit code, other wise stop.
             liftM ((return <$>) . void . exitCode) get >>= fromMaybe loop
@@ -120,8 +119,15 @@ runBot BotConfig{..}    =   connect
             -- TODO: add a second catchError wrapper here so that one crappy
             -- component doesn't bring down the entire bot
             components  <-  gets components 
-                        >>= mapM (process message)
+                        >>= mapM (\c -> process message c `catch` handler c)
             modify $ \s -> s { components }
+            where
+                handler :: a -> SomeException -> Bot a
+                handler a   =   (return a <*) 
+                            .   liftIO 
+                            .   putStrLn 
+                            .   ("ERROR: Component: " ++) 
+                            .   show
 
 -- | Read from IRC. 
 -- This method is not exposed because there should be no reason that a
