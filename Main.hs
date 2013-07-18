@@ -76,7 +76,7 @@ main = do
         ,   grantOps
         ,   rollDice
         ,   sayGoodbye
-        ,   seen
+        ,   seen cnHandle
         ,   uptime
         ,   youtube
 
