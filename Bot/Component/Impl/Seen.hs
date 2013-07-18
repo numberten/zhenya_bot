@@ -7,13 +7,16 @@ import              Bot.Component
 import              Bot.Component.Command
 import              Bot.Component.Conditional
 import              Bot.Component.Combinator
+import              Bot.Component.Impl.NickCluster
 import              Bot.Component.Stateful
 import              Bot.IO
 import              Bot.Time
 
-import              Control.Applicative
+import              Control.Arrow hiding ((+++))
 import              Control.Monad.State
+import              Data.List
 import qualified    Data.Map as M
+import              Data.Maybe
 import              System.Time
 
 -- | The standard ClockTime definition does not define a Read Instance?? So to
@@ -31,12 +34,15 @@ instance Read SeenTime where
 
 type TimeMap = M.Map String SeenTime
 
-seen :: Bot BotComponent
-seen = persistent "seen.txt" action initialState
+-- | The seen component keeps a mapping of nicks to times that they last spoke.
+-- And can be queried through the !seen command.
+seen :: ClusterNickHandle -> Bot BotComponent
+seen cnHandle = persistent "seen.txt" action initialState
     where
-        action          = seenLogger +++ seenCommand
+        action          = seenLogger +++ seenCommand cnHandle
         initialState    = return M.empty
 
+-- | Runs for every message updates the time last seen for the current nick.
 seenLogger :: String -> StateT TimeMap Bot ()
 seenLogger = conditionalT (\_ -> True) seenLoggerAction
 
@@ -46,18 +52,31 @@ seenLoggerAction = do
     now             <-  liftIO getClockTime
     modify (M.insert currentNick $ SeenTime now)
 
-seenCommand :: String -> StateT TimeMap Bot ()
-seenCommand = commandT "!seen" seenCommandAction
+-- | Responds to !seen commands.
+seenCommand :: ClusterNickHandle -> String -> StateT TimeMap Bot ()
+seenCommand cnHandle = commandT "!seen" $ seenCommandAction cnHandle
 
-seenCommandAction :: [String] -> StateT TimeMap Bot ()
-seenCommandAction (nick:_)  = do
-    lastSeen <- M.lookup nick <$> get
-    case lastSeen of
-        Just (SeenTime lastSeen)    -> do
+seenCommandAction :: ClusterNickHandle -> [String] -> StateT TimeMap Bot ()
+seenCommandAction cnHandle (nick:_) = do
+    timeMap         <-  get
+    aliases         <-  lift $ aliasesForNick cnHandle nick
+    let seenTimes   =   mapMaybe mfuse
+                    $   map (return &&& (`M.lookup` timeMap)) aliases
+    case seenTimes of
+        []          -> lift $ ircReply "I have not seen them speak."
+        seenTimes   -> do
+            let (nick, SeenTime lastSeen)
+                        =   maximumBy compareTimes seenTimes
             now         <-  liftIO getClockTime
             let diff    =   pretty $ diffClockTimes now lastSeen
-            lift $ ircReply $ "I last saw them speak " ++ diff ++ " ago."
-        Nothing                     ->  
-            lift $ ircReply "I have not seen them speak."
-seenCommandAction _         =   return ()
+            lift $ ircReply $ concat
+                ["I last saw them speak ", diff, " ago as ", nick]
+    where
+        compareTimes (_, SeenTime a) (_, SeenTime b) = compare a b
+        mfuse (ma,mb) = do
+            a <- ma
+            b <- mb
+            return (a,b)
+
+seenCommandAction _       _         = return ()
 
