@@ -51,7 +51,13 @@ fileSearch = stateful (fileSearchCommand +++ reloadCatalogue) initialState
 
         -- Adds a single file path to an index
         parseFilePath filepath index =
-            let terms = words $ map toLower $ takeBaseName filepath
+            let terms   =   words 
+                        $   map toLower 
+                        $   concat [
+                                takeBaseName filepath 
+                            ,   " "
+                            ,   takeExtension filepath
+                            ]
             in  foldr (\term -> M.insertWith (<>) term [filepath]) index terms
 
         -- Every 10 minutes reload the index
