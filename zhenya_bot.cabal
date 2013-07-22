@@ -22,6 +22,7 @@ Executable zhenya_bot
                  ,  mtl                     >=  2.0
                  ,  network                 >=  2.3
                  ,  old-time                >=  1.1
+                 ,  time                    >=  1.4
                  ,  random                  >=  1.0
                  ,  regex-tdfa              >=  1.0
                  ,  strict                  >=  0.3

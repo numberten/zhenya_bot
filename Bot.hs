@@ -22,11 +22,11 @@ import Control.Monad.Catch
 import Control.Monad.State
 import Data.Maybe
 import Network
+import Prelude hiding (catch)
 import System.Exit
 import System.Directory
 import System.IO
 import Text.Printf
-import Prelude hiding (catch)
 
 -- | The configuration used to initialize an instance of a chat bot.
 data BotConfig = BotConfig {

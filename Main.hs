@@ -5,6 +5,7 @@ import Bot
 import Bot.Component.Command
 import Bot.Component.Conditional
 import Bot.Component.Fuzzy
+import Bot.Component.Impl.FileSearch
 import Bot.Component.Impl.Goodbye
 import Bot.Component.Impl.NickCluster
 import Bot.Component.Impl.Op
@@ -73,6 +74,7 @@ main = do
         ,   cfgNick     = nickFlag
         } `withComponents` [
             clusterNickService cnHandle 0.3
+        ,   fileSearch
         ,   grantOps
         ,   rollDice
         ,   sayGoodbye
