@@ -21,7 +21,9 @@ define = command "!define" defineAction
                         .   fmap parseTags 
                         $   getResponseBody 
                         =<< simpleHTTP (getRequest 
-                        $   "http://www.urbandictionary.com/define.php?term=" ++ unwords words)
+                        $   "http://www.urbandictionary.com/define.php?term="
+                        ++  (map (\x -> if x == ' ' then '+' else x)
+                        $   unwords words))
             let definition = fromTagText (dropWhile (~/= "<div class=\"definition\">") tags !! 1)
             ircReply    $ unwords words ++ ": " ++ definition
 
