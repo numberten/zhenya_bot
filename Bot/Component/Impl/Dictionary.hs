@@ -8,17 +8,20 @@ import Bot.IO
 
 import Control.Monad
 import Network.Curl.Download
+import Network.HTTP
 import Text.HTML.TagSoup
 import Text.HTML.Download
 
 define :: Bot BotComponent
-define = command "!define" (defineAction)
+define = command "!define" defineAction
     where
+        -- Looks up the definition of words and reports it to chat
         defineAction words = do
-            let word    = concat
-                        . take 1
-                        $ words
-            tags <- liftIO $ fmap parseTags $ openURL $ "http://www.urbandictionary.com/define.php?term=" ++ word
+            tags        <-  liftIO 
+                        .   fmap parseTags 
+                        $   getResponseBody 
+                        =<< simpleHTTP (getRequest 
+                        $   "http://www.urbandictionary.com/define.php?term=" ++ unwords words)
             let definition = fromTagText (dropWhile (~/= "<div class=\"definition\">") tags !! 1)
-            ircReply definition
+            ircReply    $ unwords words ++ ": " ++ definition
 
