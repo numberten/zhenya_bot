@@ -9,19 +9,16 @@ import Bot.IO
 import Control.Monad
 import Network.Curl.Download
 import Text.HTML.TagSoup
+import Text.HTML.Download
 
 define :: Bot BotComponent
-define = command "!define" (defineAction . concat . take 1)
+define = command "!define" (defineAction)
     where
-        -- Action that looks up definition of word
-        defineAction word   =   liftIO (openAsTags ("http://www.urbandictionary.com/define.php?term=" ++ word))
-                            >>= either (const $ return ()) reportDefinition
+        defineAction words = do
+            let word    = concat
+                        . take 1
+                        $ words
+            tags <- liftIO $ fmap parseTags $ openURL $ "http://www.urbandictionary.com/define.php?term=" ++ word
+            let definition = fromTagText (dropWhile (~/= "<div class=\"definition\">") tags !! 1)
+            ircReply definition
 
-        -- Attempt to pull the definition of the word and relay it to IRC
-        reportDefinition     =   mapM_ (ircReply . soupToDefinition)
-                            .   sections (~== "<div class=\"definition\">")
-
-        -- Extract the definition text from a bunch of tags
-        soupToDefinition    =   concat
-                            .   liftM (fromTagText)
-                            .   take 1
