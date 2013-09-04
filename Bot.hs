@@ -121,6 +121,8 @@ runBot BotConfig{..}    =   connect
             components  <-  gets components 
                         >>= mapM (\c -> process message c `catch` handler c)
             modify $ \s -> s { components }
+            -- Flush output so errors can actually be seen after they happen.
+            lift $ hFlush stdout >> hFlush stderr
             where
                 handler :: a -> SomeException -> Bot a
                 handler a   =   (return a <*) 
