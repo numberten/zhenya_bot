@@ -24,6 +24,16 @@ define = command "!define" defineAction
                         $   "http://www.urbandictionary.com/define.php?term="
                         ++  (map (\x -> if x == ' ' then '+' else x)
                         $   unwords words))
-            let definition = fromTagText (dropWhile (~/= "<div class=\"definition\">") tags !! 1)
-            ircReply    $ unwords words ++ ": " ++ definition
+            let definitionTags = drop 1 $ dropWhile (~/= "<div class=\"definition\">") tags
+            ircReply    $ unwords words ++ ": " ++ lootTagTexts definitionTags
+
+        lootTagTexts tags = fst $ foldl f ("", 0) tags
+            where
+                f (str, i) tag  | i < 0             = (str, i)
+                                | isTagText tag     = (str ++ fromTagText tag, i)
+                                | isTagOpen tag     = (str, i+1)
+                                | isTagClose tag    = (str, i-1)
+                                | otherwise         = error "This should never happen!"
+
+
 
