@@ -24,9 +24,20 @@ define = command "!define" defineAction
                         $   "http://www.urbandictionary.com/define.php?term="
                         ++  (map (\x -> if x == ' ' then '+' else x)
                         $   unwords words))
-            let definitionTags = drop 1 $ dropWhile (~/= "<div class=\"definition\">") tags
-            ircReply    $ unwords words ++ ": " ++ lootTagTexts definitionTags
-
+            randomUrl   <-  liftIO
+                        .   fmap parseTags
+                        $   getResponseBody
+                        =<< simpleHTTP (getRequest "http://www.urbandictionary.com/random.php")
+            let definitionTags  = drop 1 $ dropWhile (~/= "<div class=\"definition\">") tags
+            let randomUrlStr    = fromAttrib "href" . head $ drop 3 randomUrl
+            randomTags  <- liftIO
+                        . fmap parseTags
+                        $ getResponseBody
+                        =<< simpleHTTP (getRequest randomUrlStr)
+            let definition = if lootTagTexts definitionTags == "" 
+                                then lootTagTexts randomTags 
+                                else lootTagTexts definitionTags
+            ircReply    $ unwords words ++ ": " ++ definition
         lootTagTexts tags = fst $ foldl f ("", 0) tags
             where
                 f (str, i) tag  | i < 0             = (str, i)
