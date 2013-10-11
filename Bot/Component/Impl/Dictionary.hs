@@ -33,9 +33,8 @@ define = command "!define" defineAction
                         $   unwords words))
             let definitionTags          = drop 1 $ dropWhile (~/= "<div class=\"definition\">") tags
             let randomDefinitionTags    = drop 1 $ dropWhile (~/= "<div class=\"definition\">") randomtags
-            let definition      | lootTagTexts definitionTags == "" = lootTagTexts definitionTags
-                                | otherwise                         = lootTagTexts randomDefinitionTags
-            ircReply    $ unwords words ++ ": " ++ definition
+            ircReply    $ unwords words ++ ": " ++ lootTagTexts definitionTags ++"#"
+            ircReply    $ unwords words ++ ": " ++ lootTagTexts randomDefinitionTags ++"#"
 
         lootTagTexts tags = fst $ foldl f ("", 0) tags
             where
