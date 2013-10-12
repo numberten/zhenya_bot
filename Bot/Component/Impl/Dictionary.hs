@@ -34,8 +34,9 @@ define = command "!define" defineAction
                         . fmap parseTags
                         $ getResponseBody
                         =<< simpleHTTP (getRequest randomUrlStr)
+            let randomDefTags   = drop 1 $ dropWhile (~/= "<div class=\"definition\">") randomTags
             let definition = if lootTagTexts definitionTags == "" 
-                                then lootTagTexts randomTags 
+                                then lootTagTexts randomDefTags 
                                 else lootTagTexts definitionTags
             ircReply    $ unwords words ++ ": " ++ definition
         lootTagTexts tags = fst $ foldl f ("", 0) tags
