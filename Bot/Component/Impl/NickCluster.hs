@@ -6,6 +6,7 @@ module Bot.Component.Impl.NickCluster (
 ,   newClusterNickHandle
 ,   clusterNickService
 ,   aliasesForNick
+,   allNickAliases
 )   where
 
 import              Bot.Component
@@ -133,4 +134,12 @@ aliasesForNick handle nick = do
             $ map S.elems
             $ S.elems
             $ S.filter (S.member nick) clusters
+
+-- | Returns all of the nick clusters as a list of lists of nicks.
+allNickAliases :: ClusterNickHandle -> Bot [[String]]
+allNickAliases handle = do
+    ClusterNickInfo{..} <-  liftIO $ readMVar handle
+    return  $ map S.elems
+            $ S.elems
+            $ clusters
 

@@ -25,7 +25,9 @@ Executable zhenya_bot
                  ,  old-time                >=  1.1
                  ,  time                    >=  1.4
                  ,  random                  >=  1.0
+                 ,  random-fu               >=  0.2
                  ,  regex-tdfa              >=  1.0
                  ,  strict                  >=  0.3
                  ,  tagsoup                 >=  0.12
+                 ,  tokenize                >=  0.1
                  ,  transformers            >=  0.2

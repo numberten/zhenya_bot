@@ -8,6 +8,7 @@ import Bot.Component.Fuzzy
 import Bot.Component.Impl.Dictionary
 import Bot.Component.Impl.FileSearch
 import Bot.Component.Impl.Goodbye
+import Bot.Component.Impl.NGram
 import Bot.Component.Impl.NickCluster
 import Bot.Component.Impl.Op
 import Bot.Component.Impl.Roll
@@ -77,6 +78,7 @@ main = do
             clusterNickService cnHandle 0.3
         ,   define
         ,   fileSearch
+        ,   imitate cnHandle
         ,   grantOps
         ,   rollDice
         ,   sayGoodbye
