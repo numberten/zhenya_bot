@@ -3,6 +3,7 @@ module Bot.Component.Stateful (
     StatefulComponent
 ,   stateful
 ,   persistent
+,   persistent'
 )   where
 
 import Bot.Component
@@ -40,7 +41,19 @@ persistent  ::  (Show s, Read s, Eq s)
             ->  (String -> StateT s Bot ()) 
             ->  Bot s 
             ->  Bot BotComponent
-persistent saveFile action initialState = stateful action' initialState'
+persistent saveFile action initialState = 
+    persistent' saveFile action initialState (return ())
+
+-- A `stateful` `BotComponent` that saves its state in a text file between
+-- sessions.
+persistent' ::  (Show s, Read s, Eq s)
+            =>  FilePath 
+            ->  (String -> StateT s Bot ())
+            ->  Bot s 
+            ->  StateT s Bot ()
+            ->  Bot BotComponent
+persistent' saveFile action initialState startupAction = 
+    stateful action' initialState'
     where
         fullSavePath = do
             directory   <-  gets dataDirectory
@@ -62,9 +75,13 @@ persistent saveFile action initialState = stateful action' initialState'
         -- initialState.
         initialState' = do 
             fileName    <-  fullSavePath
-            liftIO (withFile fileName ReadMode loadFile) `catchError` const initialState
+            liftIO $ putStrLn fileName
+            state       <-  liftIO (withFile fileName ReadMode loadFile) 
+                                `catchError` const initialState
+            execStateT startupAction state
 
         loadFile handle = do
+            putStrLn "LOADING A FILE GOT DAMNIT"
             contents <- hGetContents handle
             return $ read contents
 

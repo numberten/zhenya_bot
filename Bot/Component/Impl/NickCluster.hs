@@ -44,14 +44,23 @@ newClusterNickHandle =
 -- | The `BotComponent` portion of the nick clustering service. This service
 -- must be included in the Bot otherwise all API calls will hang.
 clusterNickService :: ClusterNickHandle -> Double -> Bot BotComponent
-clusterNickService handle threshold =   liftIO (forkIO startClustering)
-                                    >>  persistent nickFile action initial
+clusterNickService handle threshold =
+        liftIO (forkIO startClustering) 
+    >>  persistent' nickFile action initial startup
     where
         nickFile = "nick-cluster.txt"
         delay = 1000000 -- 5 seconds
 
         -- Create the very first ClusterNickState
-        initial = return S.empty
+        initial =   return S.empty  
+
+        -- Updates the ClusterNickInfo to include the latest greatest nick data
+        -- at startup.
+        startup = do
+            seenNicks   <-  get
+            info        <-  liftIO $ takeMVar handle
+            liftIO $ putMVar handle info { seenNicks }
+            liftIO $ clusterTimer `catch` handler
 
         -- The action that is passed to persistent
         action  =   nickWatcher 
@@ -95,10 +104,10 @@ clusterNickService handle threshold =   liftIO (forkIO startClustering)
             clusterTimer `catch` handler 
             threadDelay delay
             startClustering
-            where
-                handler :: SomeException -> IO ()
-                handler = void . return
-                --handler = putStrLn . ("ERROR: NickCluster Error: "++) . show
+
+        handler :: SomeException -> IO ()
+        --handler = void . return
+        handler = putStrLn . ("ERROR: NickCluster Error: "++) . show
 
         -- Computes a clustering of all the nicks currently present in the
         -- in the handle. It reads the nicks in a non-blocking manner so that
@@ -124,7 +133,7 @@ clusterNickService handle threshold =   liftIO (forkIO startClustering)
                 overlap = fromIntegral $ length $ lcs a' b'
                 lengthA = fromIntegral $ length a'
                 lengthB = fromIntegral $ length b'
- 
+
 -- | Returns a list of nicks that have been determined to be aliases for the
 -- supplied nick.
 aliasesForNick :: ClusterNickHandle -> String -> Bot [String]
