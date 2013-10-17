@@ -41,18 +41,14 @@ imitate handle = stateful commandAction initialState
             directory <- gets dataDirectory
             return (directory </> "ngram.txt")
 
+        -- Loads a preprocessed version of the log and creates a BiGramModel for
+        -- each unique nick seen.
         initialState :: Bot ImitateState
         initialState = do
             log             <-  logPath >>= liftIO . readFile
             let logLines    =   lines $ log
             let allMessages =   groupByName $ map processLine logLines
             return $ M.map (createModel . concatMap bigrams) allMessages
-            --nickClusters    <-  allNickAliases handle
-            --let clusterMaps =   map (M.fromList . map (,())) nickClusters
-            --let nickToLines =   map (M.intersection allMessages) clusterMaps
-            --let models      =   map (createModel . concatMap bigrams) 
-            --                $   concatMap M.elems nickToLines
-            --return $ M.fromList $ zip (map (head . M.keys) nickToLines) models
 
         -- Returns the nick of the same cluster as the one given that is used as
         -- the key for the map of nicks to models.
@@ -86,15 +82,17 @@ imitate handle = stateful commandAction initialState
                 resultingMap    =   foldr (M.insert cnick) modelMapSansKey
                                 $   maybeToList mergedValue
 
-
+        -- First attempts to group nicks together based on clusters, and then
+        -- generates a sentence in the literary stylings of the given nick.
         commandAction = commandT "!be" $ \args -> case args of
             [nick]  -> do
                 mergeModels
-                keyNick <- canonicalNick nick
-                fromMaybe (lift $ ircReply "not a guy.") $ keyNick >>= \keyNick -> return $ do
+                keyNick         <-  canonicalNick nick
+                let sayMessage  =   keyNick >>= \keyNick -> return $ do
                     model   <- gets (M.! keyNick)
                     message <- liftIO $ utterance model
                     lift $ ircReply message
+                fromMaybe (lift $ ircReply "not a guy.") sayMessage 
             _       -> lift $ ircReply "be who?"
         
 -- | Process a line from the specially formatted log file.
