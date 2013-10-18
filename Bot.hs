@@ -80,6 +80,8 @@ runBot BotConfig{..}    =   connect
             return BotState {
                     socket
                 ,   exitCode        = Nothing
+                ,   botNick         = cfgNick
+                ,   botHost         = "zhenya_bot@i.love.debian.org"
                 ,   currentNick     = ""
                 ,   currentChannel  = ""
                 ,   dataDirectory   = cfgData

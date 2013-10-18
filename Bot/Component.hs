@@ -44,6 +44,8 @@ data BotState = BotState {
     ,   components      :: [BotComponent]
     ,   currentChannel  :: String
     ,   currentNick     :: String
+    ,   botNick         :: String
+    ,   botHost         :: String
 }
 
 -- | A type synonym for the Bot monad.
