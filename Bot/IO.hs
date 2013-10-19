@@ -13,12 +13,38 @@ import Control.Monad.State
 import Control.Monad.Trans.Identity
 import Text.Printf
 
+import Debug.Trace
+
 -- | Write a `String` message to IRC.
 ircWrite :: String -> String -> Bot ()
 ircWrite command message = do
 	handle  <-  gets socket
-	liftIO  $   hPrintf handle "%s %s\r\n" command message
-	        >>  printf "> %s %s\n" command message
+        nick    <-  gets botNick
+        host    <-  gets botHost
+        if command == "PRIVMSG"
+            then
+	        liftIO  $   sequence (fmap (uncurry3 $ hPrintf handle "%s %s%s\r\n") (trace (show (partitionPrivMsg nick host channel message2)) (partitionPrivMsg nick host channel message2)))
+	                >>  printf "> %s %s\n" command message
+            else
+                liftIO  $   hPrintf handle "%s %s\r\n" command message
+                        >>  printf "> %s %s\n" command message
+    where
+        channel     = takeWhile (/= ':') message ++ ":"
+        message2    = drop 1 $ dropWhile (/= ':') message
+        uncurry3 f (a,b,c) = f a b c
+        partitionPrivMsg :: String -> String -> String -> String -> [(String,String,String)]
+        partitionPrivMsg n h c m   | messageroom >= lmessage
+                                                = [(command,c,m)]
+                                                | otherwise
+                                                = (command,c,take messageroom m):(partitionPrivMsg n h c $ drop messageroom m)
+            where
+                lnick       = length n
+                lhost       = length h
+                lchannel    = length c
+                lmessage    = length m
+                messageroom = trace ("nick: " ++ show n ++ "\nchannel: " ++ show c ++ "\n") (510 - 11 - lnick - lchannel - lhost)
+
+
 
 -- | Send a message to the current channel or nick.
 ircReply :: String -> Bot ()
