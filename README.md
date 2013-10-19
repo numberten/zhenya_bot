@@ -25,7 +25,7 @@ join multiple channles.
 Commands
 ---------
 
-   - !id <command>
+   - !id \<command\>
       - zhenya_bot will privmsg <command> to channel
    - !uptime
       - privmsgs time spent in channel
@@ -34,12 +34,21 @@ Commands
    - !restart
       - restarts the zhenya_bot
    - !update
-      - restarts the zhenya_bot and performs a `git pull`
-   - !seen <person>
-      - privmsgs time since <person> was last active
+      - restarts the zhenya_bot and performs a `git pull` before reconnecting
+   - !seen \<nick\>
+      - privmsgs time since \<nick\> last spoke
    - !ascend
       - attempts to +o speaker, with echo
    - !ding
       - attempts to +o speaker, without echo
-   - !roll <number> 
-      - privmsgs a random number between 1 and <number>
+   - !roll \<number\> 
+      - privmsgs a random number between 1 and \<number\>
+   - !be \<nick\>
+      - zhenya_bot will attempt to say a sentence in the manner of \<nick\>, using a bigram model trained off irc logs
+   - !files \<string\>
+      - searches for \<string\> in a given file catalogue, reporting the top 5 results
+   - !alias \[\<nick\>\]
+      - reports all nick clusters seen by the zhenya_bot
+      - only reports nick cluster containing \<nick\>, if optional \<nick\> argument is given
+   - !define \<string\>
+      - responds with "definition" of \<string\>
