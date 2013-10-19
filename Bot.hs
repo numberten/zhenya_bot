@@ -81,7 +81,7 @@ runBot BotConfig{..}    =   connect
                     socket
                 ,   exitCode        = Nothing
                 ,   botNick         = cfgNick
-                ,   botHost         = "zhenya_bot@i.love.debian.org"
+                ,   botHost         = ""
                 ,   currentNick     = ""
                 ,   currentChannel  = ""
                 ,   dataDirectory   = cfgData
@@ -100,6 +100,7 @@ runBot BotConfig{..}    =   connect
         init cfgComponents = do
             ircWrite "NICK" cfgNick
             ircWrite "USER" $ cfgNick ++ " 0 * :Greatest Guys bot"
+            ircWrite "WHO" cfgNick
             mapM_ (ircWrite "JOIN") cfgChannel
             components  <-  sequence cfgComponents
             modify $ \s -> s { components }
