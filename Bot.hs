@@ -80,6 +80,8 @@ runBot BotConfig{..}    =   connect
             return BotState {
                     socket
                 ,   exitCode        = Nothing
+                ,   botNick         = cfgNick
+                ,   botHost         = ""
                 ,   currentNick     = ""
                 ,   currentChannel  = ""
                 ,   dataDirectory   = cfgData
@@ -98,6 +100,7 @@ runBot BotConfig{..}    =   connect
         init cfgComponents = do
             ircWrite "NICK" cfgNick
             ircWrite "USER" $ cfgNick ++ " 0 * :Greatest Guys bot"
+            ircWrite "WHO" cfgNick
             mapM_ (ircWrite "JOIN") cfgChannel
             components  <-  sequence cfgComponents
             modify $ \s -> s { components }
