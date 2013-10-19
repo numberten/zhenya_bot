@@ -25,7 +25,9 @@ ircWrite command message = do
         host    <-  gets botHost
         if command == "PRIVMSG"
             then
-	        liftIO  $   sequence (fmap (uncurry3 $ hPrintf handle "%s %s%s\r\n") (trace (show (partitionPrivMsg nick host channel message2)) (partitionPrivMsg nick host channel message2)))
+	        liftIO  $   sequence_ (fmap (uncurry3 
+                        $   hPrintf handle "%s %s%s\r\n")
+                        $   partitionPrivMsg nick host channel message2)
 	                >>  printf "> %s %s\n" command message
             else
                 liftIO  $   hPrintf handle "%s %s\r\n" command message
@@ -35,16 +37,16 @@ ircWrite command message = do
         message2    = drop 1 $ dropWhile (/= ':') message
         uncurry3 f (a,b,c) = f a b c
         partitionPrivMsg :: String -> String -> String -> String -> [(String,String,String)]
-        partitionPrivMsg n h c m   | messageroom >= lmessage
-                                                = [(command,c,m)]
-                                                | otherwise
-                                                = (command,c,take messageroom m):(partitionPrivMsg n h c $ drop messageroom m)
+        partitionPrivMsg n h c m    | messageroom >= lmessage
+                                        = [(command,c,m)]
+                                    | otherwise
+                                        = (command,c,take messageroom m):partitionPrivMsg n h c (drop messageroom m)
             where
                 lnick       = length n
                 lhost       = length h
                 lchannel    = length c
                 lmessage    = length m
-                messageroom = trace ("nick: " ++ show n ++ "\nchannel: " ++ show c ++ "\nhost: " ++ show h ++ "\n") (510 - 11 - lnick - lchannel - lhost)
+                messageroom = 510 - 11 - lnick - lchannel - lhost
 
 
 
@@ -88,7 +90,7 @@ onPrivMsgT action rawMessage =
         _:number:nick:"*":botHost1:botHost2:_
             ->  do
                 ourNick <- lift $ gets botNick
-                let botHost = if and [number == "352", nick == ourNick]
+                let botHost = if (number == "352") && (nick == ourNick)
                                 then botHost1 ++ ('@':botHost2)
                                 else botHost 
                 lift $ modify (\s -> s {botHost})
