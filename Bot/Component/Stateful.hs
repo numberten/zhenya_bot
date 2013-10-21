@@ -37,6 +37,14 @@ instance BotMonad b => BotMonad (StateT s b) where
 
     liftBot = lift . liftBot
 
+-- | Creates a `Component` given an action and an initial state that operates in
+-- a StateT monad.
+stateful    ::  (String -> StateT s (IdentityT Bot) ())
+            ->  Bot s
+            ->  Bot Component
+stateful action initialState = MkComponent <$> statefulP action initialState ()
+
+-- | Creates
 statefulP   ::  BotMonad b
             =>  (String -> StateT s b ())
             ->  Bot s
@@ -45,12 +53,7 @@ statefulP action initialState innerState = do
     state <- initialState
     return ((state, innerState), action)
 
-stateful    ::  (String -> StateT s (IdentityT Bot) ())
-            ->  Bot s
-            ->  Bot Component
-stateful action initialState = MkComponent <$> statefulP action initialState ()
-
--- A `stateful` `BotComponent` that saves its state in a text file between
+-- | A `stateful` `BotComponent` that saves its state in a text file between
 -- sessions.
 persistent  ::  (Show s, Read s, Eq s)
             =>  FilePath
@@ -60,7 +63,7 @@ persistent  ::  (Show s, Read s, Eq s)
 persistent saveFile action initialState =
     MkComponent <$> persistentP saveFile action initialState ()
 
--- A `stateful` `BotComponent` that saves its state in a text file between
+-- | A `stateful` `BotComponent` that saves its state in a text file between
 -- sessions that also has a startupAction. This is useful is there is some
 -- post-processing that needs to happen after the state is loaded from a file.
 persistentP ::  (Show s, Read s, Eq s, BotMonad b)

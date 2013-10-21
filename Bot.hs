@@ -81,7 +81,7 @@ runBot BotConfig{..}    =   connect
                 ,   botNick         = cfgNick
                 ,   botHost         = ""
                 ,   currentNick     = ""
-                ,   currentChannel  = ""
+                ,   currentChannel  = fromMaybe "" $ listToMaybe cfgChannel
                 ,   dataDirectory   = cfgData
                 -- We will update the components in the init method so that they
                 -- can be evaluated within the Bot monad
@@ -116,9 +116,7 @@ runBot BotConfig{..}    =   connect
         -- components
         runComponents :: Bot ()
         runComponents = do
-            message     <-  ircRead
-            -- TODO: add a second catchError wrapper here so that one crappy
-            -- component doesn't bring down the entire bot
+            message     <-  ircReadTimeout 1000 -- wait for .1 seconds
             components  <-  gets components
                         >>= mapM (\c -> process message c `catch` handler c)
             modify $ \s -> s { components }
@@ -139,6 +137,14 @@ runBot BotConfig{..}    =   connect
             newExtractor <- dropBot' extractor $ action message
             return $ MkComponent (newExtractor, action)
 
+-- | Read from IRC, but if there is no response in a reasonable amount of time
+-- return an empty string.
+ircReadTimeout :: Int -> Bot String
+ircReadTimeout timeout = do
+    handle  <-  gets socket
+    ready   <-  liftIO $ hWaitForInput handle timeout
+    if ready then ircRead else return ""
+
 -- | Read from IRC.
 -- This method is not exposed because there should be no reason that a
 -- `BotComponent` manually reads from IRC as it's process function is passed
@@ -151,4 +157,3 @@ ircRead = do
 	(\_ -> return ()) `onPrivMsg` message
 	liftIO $ printf "< %s\n" message
 	return message
-

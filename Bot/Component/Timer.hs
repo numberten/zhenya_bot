@@ -1,28 +1,28 @@
 module Bot.Component.Timer (
-      timerComponent
-   )  where
+    timerComponent
+)  where
 
 import Bot.Component
 import Bot.Component.Stateful
 import Control.Monad
 import Control.Monad.State
+import Control.Monad.Trans.Identity
 import System.Time
 
 -- | `timerComponent` wraps the `StatefulComponent` with a specific state,
 -- as well as an explicit timer check used to propagate actions.
-timerComponent :: (String
-               -> StateT (Integer,ClockTime) Bot ())
-               -> Integer
-               -> Bot BotComponent
+timerComponent  ::  (String -> StateT (Integer, ClockTime) (IdentityT Bot) ())
+                ->  Integer
+                ->  Bot Component
 timerComponent action delay = stateful action' initialState
   where
     initialState = liftIO $ liftM ((,) delay) getClockTime
     action' message = do
                       (delay, lastFire)  <- get
-                      now <- liftIO getClockTime
+                      now <- liftBot $ liftIO getClockTime
                       if predicate (timeSince now lastFire) delay
                         then do
-                            lastFire <- liftIO getClockTime
+                            lastFire <- liftBot $ liftIO getClockTime
                             action message
                             put (delay, lastFire)
                         else do
