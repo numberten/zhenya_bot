@@ -14,6 +14,7 @@ import Control.Exception
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Trans.Identity
+import Prelude hiding (catch)
 import System.Time
 
 type TimerT = StateT ClockTime
