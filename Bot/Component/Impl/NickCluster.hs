@@ -99,7 +99,7 @@ clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
             let nickList        =   S.elems seenNicks
             let !clusters       =   S.fromList
                                 $   map (S.fromList . elements)
-                                $   dendrogram SingleLinkage nickList distance
+                                $   dendrogram CompleteLinkage nickList distance
                                     `cutAt` threshold
             modifyMVar_ handle (\info -> return info {clusters})
 
