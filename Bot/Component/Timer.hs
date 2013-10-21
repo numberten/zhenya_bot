@@ -1,5 +1,6 @@
 module Bot.Component.Timer (
     TimerT
+,   ioTimer
 ,   timer
 ,   timerP
 )  where
@@ -8,11 +9,31 @@ import Bot.Component
 import Bot.Component.Stateful
 
 import Control.Applicative
+import Control.Concurrent
+import Control.Exception
 import Control.Monad.State
 import Control.Monad.Trans.Identity
 import System.Time
 
 type TimerT = StateT ClockTime
+
+-- | Creates an IO thread that handles errors gracefully and that can be `>>`'ed
+-- to a resulting `Bot` value to create the timer on the creation of the
+-- component.
+ioTimer ::  String -- name used to identify the thread in error messages
+        ->  Int -- the delay in milliseconds
+        ->  IO () -- the IO action to perform
+        ->  Bot () -- A Bot action that will kick off the timer
+ioTimer name delay action = void $ liftIO $ forkIO loop
+    where
+        loop = do
+            action `catch` handler
+            threadDelay delay
+            loop
+
+        handler :: SomeException -> IO ()
+        --handler = void . return
+        handler = putStrLn . (("ERROR: " ++ name ++ " Error: ") ++) . show
 
 -- | A `timer` wraps the `StateT` with a specific state, as well as an explicit
 -- timer check used to propagate actions.

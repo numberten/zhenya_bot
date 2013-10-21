@@ -9,21 +9,21 @@ module Bot.Component.Impl.NickCluster (
 ,   allNickAliases
 )   where
 
-import              Bot.Component
-import              Bot.Component.Combinator
-import              Bot.Component.Command
-import              Bot.Component.Stateful
-import              Bot.IO
+import Bot.Component
+import Bot.Component.Combinator
+import Bot.Component.Command
+import Bot.Component.Stateful
+import Bot.Component.Timer
+import Bot.IO
 
-import              Control.Concurrent
-import              Control.Exception
-import              Control.Monad.State
-import              Control.Monad.Trans.Identity
-import              Data.Clustering.Hierarchical
-import              Data.Char
-import              Data.List
-import              Data.List.LCS
-import qualified    Data.Set as S
+import Control.Concurrent
+import Control.Monad.State
+import Control.Monad.Trans.Identity
+import Data.Clustering.Hierarchical
+import Data.Char
+import Data.List
+import Data.List.LCS
+import qualified Data.Set as S
 
 -- | The internal state of the nick clustering service. The datatype is opaque
 -- and should only be accessed through the exposed API.
@@ -44,23 +44,14 @@ newClusterNickHandle =
 -- | The `BotComponent` portion of the nick clustering service. This service
 -- must be included in the Bot otherwise all API calls will hang.
 clusterNickService :: ClusterNickHandle -> Double -> Bot Component
-clusterNickService handle threshold =
-        lift (liftIO $ forkIO startClustering)
-    >>  persistent nickFile action initial
+clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
+                                    >>  persistent nickFile action initial
     where
         nickFile = "nick-cluster.txt"
-        delay = 1000000 -- 5 seconds
+        delay = 1000000 -- 1 second
 
         -- Create the very first ClusterNickState
         initial =   return S.empty
-
-        -- Updates the ClusterNickInfo to include the latest greatest nick data
-        -- at startup.
---        startup = do
---            seenNicks   <-  get
---            info        <-  liftIO $ takeMVar handle
---            liftIO $ putMVar handle info { seenNicks }
---            liftIO $ clusterTimer `catch` handler
 
         -- The action that is passed to persistent
         action  ::  String -> StateT (S.Set String) (IdentityT Bot) ()
@@ -98,17 +89,6 @@ clusterNickService handle threshold =
 
         -- Pretty prints a Set String of nicks to irc
         replyClusters = liftBot . ircReply . intercalate ", " . S.elems
-
-        -- Create a time to update the ClusterNickInfo and kick off the
-        -- clustering call the first time when the component is created
-        startClustering = do
-            clusterTimer `catch` handler
-            threadDelay delay
-            startClustering
-
-        handler :: SomeException -> IO ()
-        --handler = void . return
-        handler = putStrLn . ("ERROR: NickCluster Error: "++) . show
 
         -- Computes a clustering of all the nicks currently present in the
         -- in the handle. It reads the nicks in a non-blocking manner so that
@@ -152,4 +132,3 @@ allNickAliases handle = do
     return  $ map S.elems
             $ S.elems
             $ clusters
-
