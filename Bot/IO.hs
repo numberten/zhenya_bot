@@ -13,8 +13,6 @@ import Control.Monad.State
 import Control.Monad.Trans.Identity
 import Text.Printf
 
-import Debug.Trace
-
 -- | Write a `String` message to IRC.
 -- If the string doesn't fit in the 512 char length that IRC messages
 -- are limited to, it will be broken up into separate messages.
@@ -85,9 +83,9 @@ onPrivMsgT action rawMessage =
         --  our host and store it in state as botHost.
         _:number:nick:"*":botHost1:botHost2:_
             ->  do
-                ourNick <- lift $ gets botNick
+                ourNick <- liftBot $ gets botNick
                 let botHost = if (number == "352") && (nick == ourNick)
                                 then botHost1 ++ ('@':botHost2)
                                 else botHost
-                lift $ modify (\s -> s {botHost})
+                liftBot $ modify (\s -> s {botHost})
         _   ->  return ()
