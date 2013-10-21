@@ -25,10 +25,11 @@ combine methods message = mapM_ ($ message) methods
 
 -- | A convenient combinator for stacking multiple `ComponentPart`s.
 (>>+)    ::  (BotMonad b, BotMonad (d b), Applicative (d b), MonadTrans d)
-         =>  (ComponentPart b)
+         =>  Bot (ComponentPart b)
          ->  (BotExtractor b -> Bot (ComponentPart (d b)))
          ->  Bot (ComponentPart (d b))
-(innerExtractor, innerAction) >>+ outerComponentCreator = do
-    (outerExtractor, outerAction) <- outerComponentCreator innerExtractor
+innerComponent >>+ outerComponentCreator = do
+    (innerExtractor, innerAction)   <-  innerComponent
+    (outerExtractor, outerAction)   <-  outerComponentCreator innerExtractor
     let combinedAction = (*>) <$> lift . innerAction <*> outerAction
     return (outerExtractor, combinedAction)
