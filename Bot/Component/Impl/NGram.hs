@@ -47,7 +47,7 @@ imitate handle = stateful commandAction initialState
         initialState :: Bot ImitateState
         initialState = do
             log             <-  logPath >>= liftIO . readFile
-            let logLines    =   lines $ log
+            let logLines    =   lines log
             let allMessages =   groupByName $ map processLine logLines
             return $ M.map (createModel . concatMap bigrams) allMessages
 
@@ -150,7 +150,7 @@ utterance model =   liftM (cleanUp . unwords . map gramToString)
         generate current = do
             newGram <-  fromMaybe (return EndGram)
                     $   (sample . snd)
-                    <$> (M.lookup current model)
+                    <$> M.lookup current model
             rest    <-  generate newGram
             return (newGram : rest)
 

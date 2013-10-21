@@ -60,7 +60,7 @@ clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
 
         -- Add every nick to the cache and to the handle's set of nicks
         nickWatcher _ = do
-            BotState{..}                <-  liftBot $ get
+            BotState{..}                <-  liftBot get
             info@ClusterNickInfo{..}    <-  liftBot $ liftIO $ takeMVar handle
             seenNicks                   <-  liftM (addNick currentNick) get
             liftBot $ liftIO $ putMVar handle info { seenNicks }
@@ -130,5 +130,4 @@ allNickAliases :: ClusterNickHandle -> Bot [[String]]
 allNickAliases handle = do
     ClusterNickInfo{..} <-  liftIO $ readMVar handle
     return  $ map S.elems
-            $ S.elems
-            $ clusters
+            $ S.elems clusters

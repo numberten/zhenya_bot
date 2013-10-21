@@ -19,8 +19,8 @@ define = command "!define" defineAction
                         $   getResponseBody
                         =<< simpleHTTP (getRequest
                         $   "http://www.urbandictionary.com/define.php?term="
-                        ++  (map (\x -> if x == ' ' then '+' else x)
-                        $   unwords words))
+                        ++  map (\x -> if x == ' ' then '+' else x)
+                                (unwords words))
             randomUrl   <-  liftIO
                         .   fmap parseTags
                         $   getResponseBody
@@ -32,9 +32,10 @@ define = command "!define" defineAction
                         $ getResponseBody
                         =<< simpleHTTP (getRequest randomUrlStr)
             let randomDefTags   = drop 1 $ dropWhile (~/= "<div class=\"definition\">") randomTags
-            let definition = if lootTagTexts definitionTags == ""
-                                then lootTagTexts randomDefTags
-                                else lootTagTexts definitionTags
+            let definition  =   lootTagTexts
+                            $   if lootTagTexts definitionTags == ""
+                                then randomDefTags
+                                else definitionTags
             ircReply    $ unwords words ++ ": " ++ definition
         lootTagTexts tags = fst $ foldl f ("", 0) tags
             where

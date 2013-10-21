@@ -21,15 +21,13 @@ ircWrite command message = do
 	handle  <-  gets socket
         nick    <-  gets botNick
         host    <-  gets botHost
-        if command == "PRIVMSG"
-            then
-	        liftIO  $   sequence_ (fmap (uncurry3
-                        $   hPrintf handle "%s %s%s\r\n")
-                        $   partitionPrivMsg nick host channel message2)
-	                >>  printf "> %s %s\n" command message
-            else
-                liftIO  $   hPrintf handle "%s %s\r\n" command message
-                        >>  printf "> %s %s\n" command message
+        liftIO $ if command == "PRIVMSG"
+            then    sequence_ (fmap (uncurry3
+                            $   hPrintf handle "%s %s%s\r\n")
+                            $   partitionPrivMsg nick host channel message2)
+                >>  printf "> %s %s\n" command message
+            else    hPrintf handle "%s %s\r\n" command message
+                >>  printf "> %s %s\n" command message
     where
         channel     = takeWhile (/= ':') message ++ ":"
         message2    = drop 1 $ dropWhile (/= ':') message

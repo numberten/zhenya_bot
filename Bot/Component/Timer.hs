@@ -11,6 +11,7 @@ import Bot.Component.Stateful
 import Control.Applicative
 import Control.Concurrent
 import Control.Exception
+import Control.Monad
 import Control.Monad.State
 import Control.Monad.Trans.Identity
 import System.Time
@@ -50,16 +51,14 @@ timerP  ::  BotMonad b
         ->  BotExtractor b -> Bot (ComponentPart (TimerT b))
 timerP action delay = statefulP action' initialState
   where
-    initialState = liftIO $ getClockTime
+    initialState = liftIO getClockTime
     action' message = do
-                      lastFire  <- get
-                      now <- liftBot $ liftIO getClockTime
-                      if predicate (timeSince now lastFire) delay
-                        then do
-                            lastFire <- liftBot $ liftIO getClockTime
-                            action message
-                            put lastFire
-                        else return ()
+        lastFire  <- get
+        now <- liftBot $ liftIO getClockTime
+        when (predicate (timeSince now lastFire) delay) $ do
+            lastFire <- liftBot $ liftIO getClockTime
+            action message
+            put lastFire
 
     -- Returns a string of the number of seconds between two times.
     timeSince past present = timeDiffToString . diffClockTimes past $ present

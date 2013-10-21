@@ -17,7 +17,7 @@ import Control.Monad.Trans.Identity
 simpleCommand   ::  String
                 ->  Bot ()
                 ->  Bot Component
-simpleCommand trigger action = command trigger (\_ -> action)
+simpleCommand trigger action = command trigger (const action)
 
 -- | Create a command `BotComponent` for a command that requires arguments.
 command ::  String
@@ -38,7 +38,7 @@ simpleCommandT  ::  (BotMonad b)
                 =>  String
                 ->  b ()
                 ->  String -> b ()
-simpleCommandT trigger action = commandT trigger (\_ -> action)
+simpleCommandT trigger action = commandT trigger (const action)
 
 -- | The most general command constructor possible, the result of the action
 -- method used here lives inside of a monad transformer.

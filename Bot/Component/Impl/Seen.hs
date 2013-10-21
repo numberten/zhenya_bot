@@ -45,7 +45,7 @@ seen cnHandle = persistent "seen.txt" action initialState
 
 -- | Runs for every message updates the time last seen for the current nick.
 seenLogger :: String -> StateT TimeMap (IdentityT Bot) ()
-seenLogger = conditionalT (\_ -> True) seenLoggerAction
+seenLogger = conditionalT (const True) seenLoggerAction
 
 seenLoggerAction :: StateT TimeMap (IdentityT Bot) ()
 seenLoggerAction = do
@@ -63,8 +63,8 @@ seenCommandAction   ::  ClusterNickHandle
 seenCommandAction cnHandle (nick:_) = do
     timeMap         <-  get
     aliases         <-  liftBot $ aliasesForNick cnHandle nick
-    let seenTimes   =   mapMaybe mfuse
-                    $   map (return &&& (`M.lookup` timeMap)) aliases
+    let maybeFind   =   mfuse . (return &&& (`M.lookup` timeMap))
+    let seenTimes   =   mapMaybe maybeFind aliases
     case seenTimes of
         []          -> liftBot $ ircReply "I have not seen them speak."
         seenTimes   -> do

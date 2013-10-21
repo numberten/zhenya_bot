@@ -9,6 +9,7 @@ import Bot.Component.Command
 import Bot.Component.Stateful
 import Bot.IO
 
+import Control.Monad
 import Control.Monad.State
 import Control.Monad.Catch
 import Data.Char
@@ -43,10 +44,8 @@ fileSearch = stateful (fileSearchCommand +++ reloadCatalogue) initialState
 
         -- Given the contents of a catalogue, create a mapping from terms to
         -- files
-        createIndex handle  =   hGetContents handle
-                            >>= return
-                            .   foldr parseFilePath M.empty
-                            .   lines
+        createIndex handle  =   liftM (foldr parseFilePath M.empty . lines)
+                            $   hGetContents handle
 
         -- Adds a single file path to an index
         parseFilePath filepath index =
@@ -75,14 +74,14 @@ fileSearch = stateful (fileSearchCommand +++ reloadCatalogue) initialState
         fileSearchAction terms = do
             (_,index)       <-  get
             let keys        =   M.keys index
+            let termToFiles =   S.unions
+                            .   map (S.fromList . (index M.!))
+                            .   (\t -> filter (t `isInfixOf`) keys)
+                            .   map toLower
             let matches     =   sortBy compareFileNameLength
                             $   S.elems
                             $   foldl1 S.intersection
-                            $   map S.unions
-                            $   map (map S.fromList)
-                            $   map (map (index M.!))
-                            $   map (\t -> filter (t `isInfixOf`) keys)
-                            $   map (map toLower) terms
+                            $   map termToFiles terms
             case matches of
                 []      ->  liftBot
                         $   ircReply "No matches found. Try using fewer terms?"
