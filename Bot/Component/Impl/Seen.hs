@@ -3,22 +3,22 @@ module Bot.Component.Impl.Seen (
     seen
 )   where
 
-import              Bot.Component
-import              Bot.Component.Command
-import              Bot.Component.Conditional
-import              Bot.Component.Combinator
-import              Bot.Component.Impl.NickCluster
-import              Bot.Component.Stateful
-import              Bot.IO
-import              Bot.Time
+import Bot.Component
+import Bot.Component.Command
+import Bot.Component.Conditional
+import Bot.Component.Combinator
+import Bot.Component.Impl.NickCluster
+import Bot.Component.Stateful
+import Bot.IO
+import Bot.Time
 
-import              Control.Arrow hiding ((+++))
-import              Control.Monad.State
-import              Control.Monad.Trans.Identity
-import              Data.List
-import qualified    Data.Map as M
-import              Data.Maybe
-import              System.Time
+import Control.Arrow hiding ((+++))
+import Control.Monad.State
+import Control.Monad.Trans.Identity
+import Data.List
+import Data.Maybe
+import System.Time
+import qualified Data.Map as M
 
 -- | The standard ClockTime definition does not define a Read Instance?? So to
 -- we redefine both the Show and Read in a newtype.

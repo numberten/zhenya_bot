@@ -9,17 +9,17 @@ import Bot.Component.Command
 import Bot.Component.Stateful
 import Bot.IO
 
-import              Control.Monad.State
-import              Control.Monad.Catch
-import              Data.Char
-import              Data.List
-import qualified    Data.Map as M
-import              Data.Monoid
-import qualified    Data.Set as S
-import              Data.Time
-import              System.FilePath
-import              System.IO hiding (hGetContents)
-import              System.IO.Strict (hGetContents)
+import Control.Monad.State
+import Control.Monad.Catch
+import Data.Char
+import Data.List
+import Data.Monoid
+import Data.Time
+import System.FilePath
+import System.IO hiding (hGetContents)
+import System.IO.Strict (hGetContents)
+import qualified Data.Map as M
+import qualified Data.Set as S
 
 fileSearch = stateful (fileSearchCommand +++ reloadCatalogue) initialState
     where
