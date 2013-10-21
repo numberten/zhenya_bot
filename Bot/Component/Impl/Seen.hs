@@ -14,6 +14,7 @@ import              Bot.Time
 
 import              Control.Arrow hiding ((+++))
 import              Control.Monad.State
+import              Control.Monad.Trans.Identity
 import              Data.List
 import qualified    Data.Map as M
 import              Data.Maybe
@@ -36,40 +37,42 @@ type TimeMap = M.Map String SeenTime
 
 -- | The seen component keeps a mapping of nicks to times that they last spoke.
 -- And can be queried through the !seen command.
-seen :: ClusterNickHandle -> Bot BotComponent
+seen :: ClusterNickHandle -> Bot Component
 seen cnHandle = persistent "seen.txt" action initialState
     where
         action          = seenLogger +++ seenCommand cnHandle
         initialState    = return M.empty
 
 -- | Runs for every message updates the time last seen for the current nick.
-seenLogger :: String -> StateT TimeMap Bot ()
+seenLogger :: String -> StateT TimeMap (IdentityT Bot) ()
 seenLogger = conditionalT (\_ -> True) seenLoggerAction
 
-seenLoggerAction :: StateT TimeMap Bot ()
+seenLoggerAction :: StateT TimeMap (IdentityT Bot) ()
 seenLoggerAction = do
     BotState{..}    <-  lift get
     now             <-  liftIO getClockTime
     modify (M.insert currentNick $ SeenTime now)
 
 -- | Responds to !seen commands.
-seenCommand :: ClusterNickHandle -> String -> StateT TimeMap Bot ()
+seenCommand :: ClusterNickHandle -> String -> StateT TimeMap (IdentityT Bot) ()
 seenCommand cnHandle = commandT "!seen" $ seenCommandAction cnHandle
 
-seenCommandAction :: ClusterNickHandle -> [String] -> StateT TimeMap Bot ()
+seenCommandAction   ::  ClusterNickHandle
+                    ->  [String]
+                    ->  StateT TimeMap (IdentityT Bot) ()
 seenCommandAction cnHandle (nick:_) = do
     timeMap         <-  get
-    aliases         <-  lift $ aliasesForNick cnHandle nick
+    aliases         <-  liftBot $ aliasesForNick cnHandle nick
     let seenTimes   =   mapMaybe mfuse
                     $   map (return &&& (`M.lookup` timeMap)) aliases
     case seenTimes of
-        []          -> lift $ ircReply "I have not seen them speak."
+        []          -> liftBot $ ircReply "I have not seen them speak."
         seenTimes   -> do
             let (nick, SeenTime lastSeen)
                         =   maximumBy compareTimes seenTimes
             now         <-  liftIO getClockTime
             let diff    =   pretty $ diffClockTimes now lastSeen
-            lift $ ircReply $ concat
+            liftBot $ ircReply $ concat
                 ["I last saw them speak ", diff, " ago as ", nick]
     where
         compareTimes (_, SeenTime a) (_, SeenTime b) = compare a b

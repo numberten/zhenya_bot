@@ -12,12 +12,12 @@ import Control.Monad.State
 import System.Time
 
 -- | Report the IRC bot's uptime upon encountering the "!uptime" command.
-uptime :: Bot BotComponent
+uptime :: Bot Component
 uptime = stateful commandAction initialState
     where
         initialState = liftIO getClockTime
 
         commandAction = simpleCommandT "!uptime" $ do
-            now     <- liftIO getClockTime
+            now     <- liftBot $ liftIO getClockTime
             zero    <- get
-            lift $ ircReply $ pretty $ diffClockTimes now zero
+            liftBot $ ircReply $ pretty $ diffClockTimes now zero

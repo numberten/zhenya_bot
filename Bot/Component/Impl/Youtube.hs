@@ -10,7 +10,7 @@ import Control.Monad
 import Network.Curl.Download
 import Text.HTML.TagSoup
 
-youtube :: Bot BotComponent
+youtube :: Bot Component
 youtube = regex pattern linkHandler
     where
         pattern         = "youtube.com/watch\\?([a-zA-Z]+=[a-zA-Z0-9_#-]+&)*v=[a-zA-Z0-9_#-]+"

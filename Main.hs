@@ -34,27 +34,27 @@ data Flags = Flags {
 -- different flags.
 flagDefinition = Flags {
         serverFlag  =   "crafting.dangerbear.in"
-                    &=  explicit 
+                    &=  explicit
                     &=  help "The IRC server to connect to"
                     &=  name "server"
                     &=  typ "HostName"
     ,   portFlag    =   6667
-                    &=  explicit 
+                    &=  explicit
                     &=  help "The port on which the IRC server is running"
                     &=  name "port"
                     &=  typ "PortNumber"
     ,   nickFlag    =   "zhenya_bot"
-                    &=  explicit 
+                    &=  explicit
                     &=  help "The nick that the bot should take"
                     &=  name "nick"
                     &=  typ "Nick"
     ,   channelFlag =   []
-                    &=  explicit 
+                    &=  explicit
                     &=  help "The channel that the bot should join"
                     &=  name "channel"
                     &=  typ "Channel"
     ,   dataFlag    =   "data"
-                    &=  explicit 
+                    &=  explicit
                     &=  help "The directory persistent files should be stored"
                     &=  name "data"
                     &=  typ "Directory"
@@ -88,18 +88,17 @@ main = do
 
         ,   command "!id" (ircReply . unwords)
 
-        ,   conditional (nickFlag `isPrefixOf`) (ircReply "hm?") 
+        ,   conditional (nickFlag `isPrefixOf`) (ircReply "hm?")
 
-        ,   fuzzyMatch "pigups" 0.1 
-                (ircReply "Jolly good pigups, jolly good.") 
+        ,   fuzzyMatch "pigups" 0.1
+                (ircReply "Jolly good pigups, jolly good.")
 
         ,   fuzzyMatch "you can't dry a bug!" 0.2
-                (ircReply "Noted.") 
+                (ircReply "Noted.")
 
-        ,   fuzzyMatch "cheap meat" 0.1 
-                (ircReply "Can we go to DQ?") 
+        ,   fuzzyMatch "cheap meat" 0.1
+                (ircReply "Can we go to DQ?")
 
         ,   fuzzyMatch "I'd expect it." 0.1
                 (ircReply "me too")
         ]
-

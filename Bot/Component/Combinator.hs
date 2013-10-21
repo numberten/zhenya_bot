@@ -1,23 +1,34 @@
 module Bot.Component.Combinator (
     (+++)
+,   (>>+)
 ,   combine
 )   where
 
 import Bot.Component
-import Bot.Component.Function()
 
+import Control.Applicative
 import Control.Monad.Trans
 
 -- | Combine two generalized process methods into a single process method.
-(+++)   ::  (MonadTrans t, Monad (t Bot)) 
-        =>  (String -> t Bot ())
-        ->  (String -> t Bot ())
-        ->  String -> t Bot ()
-(+++) first second message  =   first message 
+(+++)   ::  BotMonad b
+        =>  (String -> b ())
+        ->  (String -> b ())
+        ->  String -> b ()
+(+++) first second message  =   first message
                             >>  second message
 
 -- | Combine a list of generalized process methods into a single process method.
-combine ::  (MonadTrans t, Monad (t Bot)) 
-        =>  [String -> t Bot ()]
-        ->  String -> t Bot ()
+combine ::  BotMonad b
+        =>  [String -> b ()]
+        ->  String -> b ()
 combine methods message = mapM_ ($ message) methods
+
+-- | A convenient combinator for stacking multiple `ComponentPart`s.
+(>>+)    ::  (BotMonad b, BotMonad (d b), Applicative (d b), MonadTrans d)
+         =>  (ComponentPart b)
+         ->  (BotExtractor b -> Bot (ComponentPart (d b)))
+         ->  Bot (ComponentPart (d b))
+(innerExtractor, innerAction) >>+ outerComponentCreator = do
+    (outerExtractor, outerAction) <- outerComponentCreator innerExtractor
+    let combinedAction = (*>) <$> lift . innerAction <*> outerAction
+    return (outerExtractor, combinedAction)

@@ -25,7 +25,7 @@ ircWrite command message = do
         host    <-  gets botHost
         if command == "PRIVMSG"
             then
-	        liftIO  $   sequence_ (fmap (uncurry3 
+	        liftIO  $   sequence_ (fmap (uncurry3
                         $   hPrintf handle "%s %s%s\r\n")
                         $   partitionPrivMsg nick host channel message2)
 	                >>  printf "> %s %s\n" command message
@@ -52,27 +52,23 @@ ircWrite command message = do
 
 -- | Send a message to the current channel or nick.
 ircReply :: String -> Bot ()
-ircReply message    =   gets currentChannel 
+ircReply message    =   gets currentChannel
                     >>= flip ircReplyTo message
 
 -- | Send a message to a specific channel or nick.
 ircReplyTo :: String -> String -> Bot ()
-ircReplyTo channel message = ircWrite "PRIVMSG" (channel ++ " :" ++ message)
+ircReplyTo channel message  = ircWrite "PRIVMSG" (channel ++ " :" ++ message)
 
--- | Executes the given action on the message portion of PRIVMSG's and do
--- nothing for other types of IRC messages. 
-onPrivMsg :: (String -> Bot ()) -> String -> Bot ()
-onPrivMsg action = runIdentityT . onPrivMsgT actionT
-    where
-        actionT :: String -> IdentityT Bot ()
-        actionT = lift . action
+onPrivMsg   ::  (String -> Bot ())
+            ->  String -> Bot ()
+onPrivMsg action = runIdentityT . onPrivMsgT (IdentityT . action)
 
 -- | Filters out IRC messages that are not PRIVMSG's. In the event of a PRIVMSG,
--- the relevant part of the message is passed to the action function. 
-onPrivMsgT  ::  (MonadTrans t, Monad (t Bot)) 
-            =>  (String -> t Bot ()) 
-            ->  String ->  t Bot ()
-onPrivMsgT action rawMessage = 
+-- the relevant part of the message is passed to the action function.
+onPrivMsgT ::  (BotMonad b)
+           =>  (String -> b ())
+           ->  String -> b ()
+onPrivMsgT action rawMessage =
     case words rawMessage of
         sender:"PRIVMSG":channel:message
             ->  do
@@ -81,9 +77,9 @@ onPrivMsgT action rawMessage =
                 -- work to extract the nick of the person who just sent us the
                 -- message.
                 let currentChannel  = if head channel == '#'
-                                        then channel 
+                                        then channel
                                         else currentNick
-                lift $ modify (\s -> s {currentChannel, currentNick})
+                liftBot $ modify (\s -> s {currentChannel, currentNick})
                 action (drop 1 $ unwords message)
         --- When catching the server's response to our WHO request, log
         --  our host and store it in state as botHost.
@@ -92,8 +88,6 @@ onPrivMsgT action rawMessage =
                 ourNick <- lift $ gets botNick
                 let botHost = if (number == "352") && (nick == ourNick)
                                 then botHost1 ++ ('@':botHost2)
-                                else botHost 
+                                else botHost
                 lift $ modify (\s -> s {botHost})
         _   ->  return ()
-                
-

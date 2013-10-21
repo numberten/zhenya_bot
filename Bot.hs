@@ -1,11 +1,10 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 module Bot (
-    Botable (..)
-,   BotComponent (..)
-,   BotConfig (..)
+    BotConfig (..)
 ,   BotState (..)
 ,   Bot
+,   Component (..)
 ,   defaultBotConfig
 ,   withComponents
 ,   runBot
@@ -22,7 +21,6 @@ import Control.Monad.Catch
 import Control.Monad.State
 import Data.Maybe
 import Network
-import Prelude hiding (catch)
 import System.Exit
 import System.Directory
 import System.IO
@@ -35,11 +33,11 @@ data BotConfig = BotConfig {
     ,   cfgData        :: String
     ,   cfgNick        :: String
     ,   cfgChannel     :: [String]
-    ,   cfgComponents  :: [Bot BotComponent]
+    ,   cfgComponents  :: [Bot Component]
 }
 
 -- | A default `BotConfig` containing `BotComponent`s that are likely wanted by
--- every bot. Such as pingResponse, 
+-- every bot. Such as pingResponse,
 defaultBotConfig = BotConfig {
         cfgServer       = "localhost"
     ,   cfgPort         = 6667
@@ -60,7 +58,7 @@ defaultBotConfig = BotConfig {
 -- >        component1
 -- >    ,   component2
 -- > ]
-withComponents  :: BotConfig -> [Bot BotComponent] -> BotConfig
+withComponents  :: BotConfig -> [Bot Component] -> BotConfig
 withComponents cfg additional = cfg {
         cfgComponents = cfgComponents cfg ++ additional
     }
@@ -74,7 +72,7 @@ runBot BotConfig{..}    =   connect
         -- Connect to the server and create the resulting `BotState`
         connect = do
             createDirectoryIfMissing True cfgData
-            socket      <-  connectTo cfgServer 
+            socket      <-  connectTo cfgServer
                         $   PortNumber (fromIntegral cfgPort)
             hSetBuffering socket NoBuffering
             return BotState {
@@ -96,7 +94,7 @@ runBot BotConfig{..}    =   connect
             exitWith $ fromMaybe ExitSuccess exitCode
 
         -- Connect to the desired channels, and set up the nick
-        init :: [Bot BotComponent] -> Bot ()
+        init :: [Bot Component] -> Bot ()
         init cfgComponents = do
             ircWrite "NICK" cfgNick
             ircWrite "USER" $ cfgNick ++ " 0 * :Greatest Guys bot"
@@ -113,7 +111,7 @@ runBot BotConfig{..}    =   connect
                         >>  modify (\s -> s {exitCode = Just $ ExitFailure 1})
             -- Continue to loop if there is no exit code, other wise stop.
             liftM ((return <$>) . void . exitCode) get >>= fromMaybe loop
-        
+
         -- Read a message from IRC and process it with each of the registered
         -- components
         runComponents :: Bot ()
@@ -121,20 +119,27 @@ runBot BotConfig{..}    =   connect
             message     <-  ircRead
             -- TODO: add a second catchError wrapper here so that one crappy
             -- component doesn't bring down the entire bot
-            components  <-  gets components 
+            components  <-  gets components
                         >>= mapM (\c -> process message c `catch` handler c)
             modify $ \s -> s { components }
             -- Flush output so errors can actually be seen after they happen.
             lift $ hFlush stdout >> hFlush stderr
             where
                 handler :: a -> SomeException -> Bot a
-                handler a   =   (return a <*) 
-                            .   liftIO 
-                            .   putStrLn 
-                            .   ("ERROR: Component: " ++) 
+                handler a   =   (return a <*)
+                            .   liftIO
+                            .   putStrLn
+                            .   ("ERROR: Component: " ++)
                             .   show
 
--- | Read from IRC. 
+        -- Takes a message and a component and returns Bot wrapped resulting
+        -- component. Used in runComponents.
+        process :: String -> Component -> Bot Component
+        process message (MkComponent (extractor, action)) = do
+            newExtractor <- dropBot' extractor $ action message
+            return $ MkComponent (newExtractor, action)
+
+-- | Read from IRC.
 -- This method is not exposed because there should be no reason that a
 -- `BotComponent` manually reads from IRC as it's process function is passed
 -- every message that is received by the bot.

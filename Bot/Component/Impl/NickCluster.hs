@@ -18,12 +18,12 @@ import              Bot.IO
 import              Control.Concurrent
 import              Control.Exception
 import              Control.Monad.State
+import              Control.Monad.Trans.Identity
 import              Data.Clustering.Hierarchical
 import              Data.Char
 import              Data.List
 import              Data.List.LCS
 import qualified    Data.Set as S
-import              Prelude hiding (catch)
 
 -- | The internal state of the nick clustering service. The datatype is opaque
 -- and should only be accessed through the exposed API.
@@ -38,40 +38,41 @@ type ClusterNickHandle = MVar ClusterNickInfo
 -- | Creates a new ClusterNickHandle for use with the clusterNickService
 -- component. A reference to this required in order to make API calls.
 newClusterNickHandle :: IO ClusterNickHandle
-newClusterNickHandle = 
+newClusterNickHandle =
     liftIO $ newMVar ClusterNickInfo {seenNicks = S.empty, clusters = S.empty}
 
 -- | The `BotComponent` portion of the nick clustering service. This service
 -- must be included in the Bot otherwise all API calls will hang.
-clusterNickService :: ClusterNickHandle -> Double -> Bot BotComponent
+clusterNickService :: ClusterNickHandle -> Double -> Bot Component
 clusterNickService handle threshold =
-        liftIO (forkIO startClustering) 
-    >>  persistent' nickFile action initial startup
+        lift (liftIO $ forkIO startClustering)
+    >>  persistent nickFile action initial
     where
         nickFile = "nick-cluster.txt"
         delay = 1000000 -- 5 seconds
 
         -- Create the very first ClusterNickState
-        initial =   return S.empty  
+        initial =   return S.empty
 
         -- Updates the ClusterNickInfo to include the latest greatest nick data
         -- at startup.
-        startup = do
-            seenNicks   <-  get
-            info        <-  liftIO $ takeMVar handle
-            liftIO $ putMVar handle info { seenNicks }
-            liftIO $ clusterTimer `catch` handler
+--        startup = do
+--            seenNicks   <-  get
+--            info        <-  liftIO $ takeMVar handle
+--            liftIO $ putMVar handle info { seenNicks }
+--            liftIO $ clusterTimer `catch` handler
 
         -- The action that is passed to persistent
-        action  =   nickWatcher 
+        action  ::  String -> StateT (S.Set String) (IdentityT Bot) ()
+        action  =   nickWatcher
                 +++ commandT "!alias" aliasCommand
 
         -- Add every nick to the cache and to the handle's set of nicks
         nickWatcher _ = do
-            BotState{..}                <-  lift get
-            info@ClusterNickInfo{..}    <-  liftIO $ takeMVar handle
+            BotState{..}                <-  liftBot $ get
+            info@ClusterNickInfo{..}    <-  liftBot $ liftIO $ takeMVar handle
             seenNicks                   <-  liftM (addNick currentNick) get
-            liftIO $ putMVar handle info { seenNicks }
+            liftBot $ liftIO $ putMVar handle info { seenNicks }
             put seenNicks
             where
                 addNick currentNick = S.filter (/= "") . S.insert currentNick
@@ -80,28 +81,28 @@ clusterNickService handle threshold =
         -- Queries the alias clusters, if there is no arguments, it will list
         -- every cluster. Otherwise, it will list aliases for each name given.
         aliasCommand []     = do
-            ClusterNickInfo{..} <-  liftIO $ readMVar handle
+            ClusterNickInfo{..} <-  liftBot $ liftIO $ readMVar handle
             mapM_ replyClusters $ S.elems clusters
 
         aliasCommand nicks  = do
-            ClusterNickInfo{..} <-  liftIO $ readMVar handle
+            ClusterNickInfo{..} <-  liftBot $ liftIO $ readMVar handle
             let nickSet         =   S.fromList nicks
             let matches         =   S.filter (matchedFilter nickSet) clusters
             let unmatched       =   S.filter (unmatchedFilter clusters) nickSet
             mapM_ replyClusters $ S.elems matches
-            mapM_ (lift . ircReply) $ S.elems unmatched
+            mapM_ (liftBot . ircReply) $ S.elems unmatched
             where
                 matchedFilter nickSet = not . S.null . S.intersection nickSet
-                unmatchedFilter clusters = 
+                unmatchedFilter clusters =
                     (`S.notMember` (S.unions $ S.elems clusters))
 
         -- Pretty prints a Set String of nicks to irc
-        replyClusters = lift . ircReply . intercalate ", " . S.elems
+        replyClusters = liftBot . ircReply . intercalate ", " . S.elems
 
         -- Create a time to update the ClusterNickInfo and kick off the
         -- clustering call the first time when the component is created
         startClustering = do
-            clusterTimer `catch` handler 
+            clusterTimer `catch` handler
             threadDelay delay
             startClustering
 
@@ -116,16 +117,16 @@ clusterNickService handle threshold =
         clusterTimer = do
             ClusterNickInfo{..} <-  readMVar handle
             let nickList        =   S.elems seenNicks
-            let !clusters       =   S.fromList 
+            let !clusters       =   S.fromList
                                 $   map (S.fromList . elements)
                                 $   dendrogram SingleLinkage nickList distance
                                     `cutAt` threshold
             modifyMVar_ handle (\info -> return info {clusters})
-        
+
         -- The distance function used for clustering. The distance between two
         -- nicks a and b is defined to be 1 - lcs(a,b)/(min(|a|,|b|). Or in
         -- other words 1 minus the ratio of the shorter nick appearing in the
-        -- longer. 
+        -- longer.
         distance a b = 1 - (overlap / min lengthA lengthB)
             where
                 a'      = map toLower a

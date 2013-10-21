@@ -10,8 +10,8 @@ import System.Time
 
 -- | `timerComponent` wraps the `StatefulComponent` with a specific state,
 -- as well as an explicit timer check used to propagate actions.
-timerComponent :: (String 
-               -> StateT (Integer,ClockTime) Bot ()) 
+timerComponent :: (String
+               -> StateT (Integer,ClockTime) Bot ())
                -> Integer
                -> Bot BotComponent
 timerComponent action delay = stateful action' initialState
@@ -28,8 +28,8 @@ timerComponent action delay = stateful action' initialState
                         else do
                             state <- get
                             put state
-                                 
-    -- Returns a string of the number of seconds between two times.  
+
+    -- Returns a string of the number of seconds between two times.
     timeSince past present = timeDiffToString . diffClockTimes past $ present
     -- Checks if `timeSince`s time is greater than a given delay.
     predicate dt d | dt == ""  = False

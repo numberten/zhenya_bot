@@ -7,7 +7,6 @@ module Bot.Component.Command (
 )   where
 
 import Bot.Component
-import Bot.Component.Function()
 import Bot.IO
 
 import Control.Monad.Trans
@@ -15,41 +14,45 @@ import Control.Monad.Trans.Identity
 
 -- | A convenience function that wraps `command` for commands that don't need to
 -- take arguments.
-simpleCommand :: String -> Bot () -> Bot BotComponent
+simpleCommand   ::  String
+                ->  Bot ()
+                ->  Bot Component
 simpleCommand trigger action = command trigger (\_ -> action)
 
 -- | Create a command `BotComponent` for a command that requires arguments.
-command :: String -> ([String] -> Bot ()) -> Bot BotComponent
-command trigger action = mkComponent $ commandT trigger actionT
+command ::  String
+        ->  ([String] -> Bot ())
+        ->  Bot Component
+command trigger action = mkComponentT $ commandT trigger actionT
     where
         actionT :: [String] -> IdentityT Bot ()
         actionT = lift . action
 
 -- | Creates a `BotComponent` that runs its action everytime it's evaluated.
-emptyCommand :: Bot () -> Bot BotComponent
+emptyCommand    :: Bot () -> Bot Component
 emptyCommand = simpleCommand ""
 
 -- | Similar to `simpleCommand` but allows the action to be wrapped inside of a
 -- monad transformer.
-simpleCommandT  ::  (MonadTrans t, Monad (t Bot)) 
-                =>  String 
-                ->  t Bot () 
-                ->  String -> t Bot ()
+simpleCommandT  ::  (BotMonad b)
+                =>  String
+                ->  b ()
+                ->  String -> b ()
 simpleCommandT trigger action = commandT trigger (\_ -> action)
 
 -- | The most general command constructor possible, the result of the action
 -- method used here lives inside of a monad transformer.
-commandT    ::  (MonadTrans t, Monad (t Bot))
+commandT    ::  (BotMonad b)
             -- | The `String` that will trigger this command
-            =>  String 
+            =>  String
             -- | The action that should be run when trigger is seen
-            ->  ([String] -> t Bot ()) 
-            -- | The resulting 
-            -> String -> t Bot ()
-commandT "" action      = action . words
+            ->  ([String] -> b ())
+            -- | The resulting
+            ->  String -> b ()
 commandT trigger action = onPrivMsgT (commandAction . words)
     where
         commandAction (first:args)  |   first == trigger    =   action args
                                     |   otherwise           =   return ()
-        commandAction _                                     =   return ()
+        commandAction _             |   trigger == ""       =   action []
+                                    |   otherwise           =   return ()
 

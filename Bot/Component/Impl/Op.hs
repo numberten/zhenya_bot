@@ -12,17 +12,17 @@ import Control.Monad.State
 import Control.Monad.Trans.Identity
 
 -- | Grant ops via the !ascend or the !ding command.
-grantOps :: Bot BotComponent
-grantOps = mkComponent $ ding +++ ascend
+grantOps :: Bot Component
+grantOps = mkComponentT $ ding +++ ascend
     where
         ding :: String -> IdentityT Bot ()
         ding = simpleCommandT "!ding" dingAction
 
-        dingAction  =   lift 
+        dingAction  =   lift
                     $   (++)
-                    <$> gets currentChannel 
+                    <$> gets currentChannel
                     <*> ((" +o "++) <$> gets currentNick)
-                    >>= ircWrite "MODE" 
+                    >>= ircWrite "MODE"
 
         ascend :: String -> IdentityT Bot ()
         ascend = simpleCommandT "!ascend" (dingAction >> ascendAction)
@@ -30,6 +30,6 @@ grantOps = mkComponent $ ding +++ ascend
         ascendAction = lift $ do
             nick        <-  gets currentNick
             ircReply    $   "Welcome to the ranks of the Ascended, Brother "
-                        ++  nick 
+                        ++  nick
                         ++  "."
 

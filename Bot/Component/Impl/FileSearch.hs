@@ -17,7 +17,6 @@ import qualified    Data.Map as M
 import              Data.Monoid
 import qualified    Data.Set as S
 import              Data.Time
-import              Prelude hiding (catch)
 import              System.FilePath
 import              System.IO hiding (hGetContents)
 import              System.IO.Strict (hGetContents)
@@ -39,7 +38,7 @@ fileSearch = stateful (fileSearchCommand +++ reloadCatalogue) initialState
         -- Loads a file catalogue from disk
         loadCatalogue = do
             path <- cataloguePath
-            liftIO (withFile path ReadMode createIndex) 
+            liftIO (withFile path ReadMode createIndex)
                 `catch` (\(_ :: SomeException) -> return M.empty)
 
         -- Given the contents of a catalogue, create a mapping from terms to
@@ -51,10 +50,10 @@ fileSearch = stateful (fileSearchCommand +++ reloadCatalogue) initialState
 
         -- Adds a single file path to an index
         parseFilePath filepath index =
-            let terms   =   words 
-                        $   map toLower 
+            let terms   =   words
+                        $   map toLower
                         $   concat [
-                                takeBaseName filepath 
+                                takeBaseName filepath
                             ,   " "
                             ,   takeExtension filepath
                             ]
@@ -63,11 +62,11 @@ fileSearch = stateful (fileSearchCommand +++ reloadCatalogue) initialState
         -- Every 10 minutes reload the index
         reloadCatalogue _ = do
             (lastLoad,_)    <-  get
-            now             <-  liftIO getCurrentTime
+            now             <-  liftBot $ liftIO getCurrentTime
             let timePassed  =   diffUTCTime now lastLoad
             let tenMinutes  =   10*60*60
             when (timePassed > tenMinutes) $
-                lift initialState >>= put
+                liftBot initialState >>= put
 
         fileSearchCommand = commandT "!files" fileSearchAction
 
@@ -85,12 +84,12 @@ fileSearch = stateful (fileSearchCommand +++ reloadCatalogue) initialState
                             $   map (\t -> filter (t `isInfixOf`) keys)
                             $   map (map toLower) terms
             case matches of
-                []      ->  lift 
+                []      ->  liftBot
                         $   ircReply "No matches found. Try using fewer terms?"
                 matches ->  do
-                    lift $ mapM_ ircReply $ take 5 matches
+                    liftBot $ mapM_ ircReply $ take 5 matches
                     when (length matches > 5) $
-                        lift $ ircReply "Limiting to top 5 results..."
+                        liftBot $ ircReply "Limiting to top 5 results..."
 
         compareFileNameLength a b = compare lengthA lengthB
             where

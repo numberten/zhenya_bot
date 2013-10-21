@@ -1,59 +1,75 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LiberalTypeSynonyms #-}
+{-# LANGUAGE TypeFamilies #-}
 module Bot.Component.Stateful (
-    StatefulComponent
-,   stateful
+    stateful
+,   statefulP
 ,   persistent
-,   persistent'
+,   persistentP
+--,   persistent'
 )   where
 
 import Bot.Component
 
-import Control.Monad.State
+import Control.Applicative
 import Control.Monad.Error
+import Control.Monad.State
+import Control.Monad.Trans.Identity
 import System.FilePath.Posix
 import System.IO hiding (hGetContents)
 import System.IO.Strict (hGetContents)
 
--- TODO: Should this be generalized to be a MonadTrans?
--- It would theoretically be much more flexible, but at the moment I can't think
--- of a use case that would require another monad on top of this...
+-- | Declare StateT as an instance of MonadBot.
+instance BotMonad b => BotMonad (StateT s b) where
+    -- | All we need to drop out of the StateT monad is the current state and
+    -- what ever inner state the inner monad has.
+    type BotExtractor (StateT s b) = (s, BotExtractor b)
 
--- A `BotComponent` that maintains some state.
-data StatefulComponent s = StatefulComponent {
-        state   :: s 
-    ,   action  :: String -> StateT s Bot ()
-}
+    -- | Dropping out of the StateT monad is done by dropping out of the outer
+    -- StateT monad and then doing whatever is required to drop out of the inner
+    -- monad.
+    dropBot (state, innerState) =   (((,)   <$> fst . fst
+                                            <*> ((,) <$> snd . fst <*> snd))
+                                    <$>) -- ugly tuple juggling
+                                <$> dropBot innerState
+                                .   (`runStateT` state)
 
-instance Botable (StatefulComponent s) where
-    process message StatefulComponent{..} = do
-        state <- execStateT (action message) state
-        return StatefulComponent {..}
+    liftBot = lift . liftBot
 
-stateful :: (String -> StateT s Bot ()) -> Bot s -> Bot BotComponent
-stateful action initialState = do
+statefulP   ::  BotMonad b
+            =>  (String -> StateT s b ())
+            ->  Bot s
+            ->  BotExtractor b -> Bot (ComponentPart (StateT s b))
+statefulP action initialState innerState = do
     state <- initialState
-    mkComponent StatefulComponent { .. }
+    return ((state, innerState), action)
+
+stateful    ::  (String -> StateT s (IdentityT Bot) ())
+            ->  Bot s
+            ->  Bot Component
+stateful action initialState = MkComponent <$> statefulP action initialState ()
 
 -- A `stateful` `BotComponent` that saves its state in a text file between
 -- sessions.
 persistent  ::  (Show s, Read s, Eq s)
-            =>  FilePath 
-            ->  (String -> StateT s Bot ()) 
-            ->  Bot s 
-            ->  Bot BotComponent
-persistent saveFile action initialState = 
-    persistent' saveFile action initialState (return ())
+            =>  FilePath
+            ->  (String -> StateT s (IdentityT Bot) ())
+            ->  Bot s
+            ->  Bot Component
+persistent saveFile action initialState =
+    MkComponent <$> persistentP saveFile action initialState ()
 
 -- A `stateful` `BotComponent` that saves its state in a text file between
--- sessions.
-persistent' ::  (Show s, Read s, Eq s)
-            =>  FilePath 
-            ->  (String -> StateT s Bot ())
-            ->  Bot s 
-            ->  StateT s Bot ()
-            ->  Bot BotComponent
-persistent' saveFile action initialState startupAction = 
-    stateful action' initialState'
+-- sessions that also has a startupAction. This is useful is there is some
+-- post-processing that needs to happen after the state is loaded from a file.
+persistentP ::  (Show s, Read s, Eq s, BotMonad b)
+            =>  FilePath
+            ->  (String -> StateT s b ())
+            ->  Bot s
+            ->  BotExtractor b ->  Bot (ComponentPart (StateT s b))
+persistentP saveFile action initialState =
+    statefulP action' initialState'
     where
         fullSavePath = do
             directory   <-  gets dataDirectory
@@ -68,20 +84,16 @@ persistent' saveFile action initialState startupAction =
 
         saveState = do
             state       <-  get
-            fileName    <-  lift fullSavePath
-            liftIO $ withFile fileName WriteMode (`hPrint` state)
+            fileName    <-  liftBot fullSavePath
+            liftBot $ liftIO $ withFile fileName WriteMode (`hPrint` state)
 
         -- Attempt to read the state from disk. If unsuccessful use the supplied
         -- initialState.
-        initialState' = do 
+        initialState' = do
             fileName    <-  fullSavePath
-            liftIO $ putStrLn fileName
-            state       <-  liftIO (withFile fileName ReadMode loadFile) 
-                                `catchError` const initialState
-            execStateT startupAction state
+            liftIO (withFile fileName ReadMode loadFile)
+                `catchError` const initialState
 
         loadFile handle = do
-            putStrLn "LOADING A FILE GOT DAMNIT"
             contents <- hGetContents handle
             return $ read contents
-

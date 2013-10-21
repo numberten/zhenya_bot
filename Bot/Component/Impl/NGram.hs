@@ -13,6 +13,7 @@ import Control.Applicative
 import Control.Arrow
 import Control.Monad
 import Control.Monad.State
+import Control.Monad.Trans.Identity
 import Data.Char
 import Data.List
 import Data.Maybe
@@ -33,7 +34,7 @@ data Gram = StartGram | EndGram | TokenGram Token
 type ImitateState = M.Map String BiGramModel
 
 -- | Speak like the various members of the IRC channel.
-imitate :: ClusterNickHandle -> Bot BotComponent
+imitate :: ClusterNickHandle -> Bot Component
 imitate handle = stateful commandAction initialState
     where
         -- Where should we look for the catalogue?
@@ -52,17 +53,18 @@ imitate handle = stateful commandAction initialState
 
         -- Returns the nick of the same cluster as the one given that is used as
         -- the key for the map of nicks to models.
-        canonicalNick :: String -> StateT ImitateState Bot (Maybe String)
+        canonicalNick   ::  String
+                        ->  StateT ImitateState (IdentityT Bot) (Maybe String)
         canonicalNick nick = do
             modelMap    <-  get
-            nicks       <-  lift $ aliasesForNick handle nick
+            nicks       <-  liftBot $ aliasesForNick handle nick
             return $ listToMaybe $ filter (`elem` nicks) $ M.keys modelMap
 
         -- Merge all known bigram models based on known alias clusters.
-        mergeModels :: StateT ImitateState Bot ()
+        mergeModels :: StateT ImitateState (IdentityT Bot) ()
         mergeModels = do
             modelMap        <-  get
-            clusters        <-  lift $ allNickAliases handle
+            clusters        <-  liftBot $ allNickAliases handle
             let newModelMap =   foldr collectNickKeys modelMap clusters
             put newModelMap
 
@@ -89,16 +91,16 @@ imitate handle = stateful commandAction initialState
                 mergeModels
                 keyNick         <-  canonicalNick nick
                 let sayMessage  =   keyNick >>= \keyNick -> return $ do
-                    model   <- gets (M.! keyNick)
-                    message <- liftIO $ utterance model
-                    lift $ ircReply message
-                fromMaybe (lift $ ircReply "not a guy.") sayMessage 
-            _       -> lift $ ircReply "be who?"
-        
+                    model       <-  gets (M.! keyNick)
+                    message     <-  liftBot $ liftIO $ utterance model
+                    liftBot $ ircReply message
+                fromMaybe (liftBot $ ircReply "not a guy.") sayMessage
+            _       -> liftBot $ ircReply "be who?"
+
 -- | Process a line from the specially formatted log file.
 processLine :: String -> (Name, [Token])
 processLine line = (name, tokenize $ map toLower message)
-    where 
+    where
         tabIndex = fromJust $ elemIndex '\t' line
         (name, '\t':message) = splitAt tabIndex line
 
@@ -136,17 +138,17 @@ mergeModel = M.unionWith mergeDist
                 eventsB = adjustedList numB distB
                 distNew = collectEvents $ fromList $ eventsA ++ eventsB
 
-                adjustedList num = map (first weight) . toList 
+                adjustedList num = map (first weight) . toList
                     where weight = (* (fromIntegral num / fromIntegral numNew))
 
 -- | Randomly generates a string based on a given BiGramModel.
 utterance :: (MonadRandom r) => BiGramModel -> r String
-utterance model =   liftM (cleanUp . unwords . map gramToString) 
+utterance model =   liftM (cleanUp . unwords . map gramToString)
                 $   generate StartGram
-    where 
+    where
         generate EndGram = return []
         generate current = do
-            newGram <-  fromMaybe (return EndGram) 
+            newGram <-  fromMaybe (return EndGram)
                     $   (sample . snd)
                     <$> (M.lookup current model)
             rest    <-  generate newGram

@@ -11,8 +11,8 @@ import Control.Monad.Trans.Identity
 import System.Exit
 
 -- | Handle the !quit, !restart, and !update commands.
-reboot :: Bot BotComponent
-reboot = mkComponent $ quit +++ restart +++ update
+reboot :: Bot Component
+reboot = mkComponentT $ quit +++ restart +++ update
 
 setExitCode :: ExitCode -> IdentityT Bot ()
 setExitCode exitCode = lift $ modify (\s -> s {exitCode = Just exitCode})
