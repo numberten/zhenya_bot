@@ -2,6 +2,7 @@
 module Bot.IO (
     ircWrite
 ,   ircReply
+,   ircReplyMaybe
 ,   ircReplyTo
 ,   onPrivMsg
 ,   onPrivMsgT
@@ -45,6 +46,10 @@ ircWrite command message = do
                 messageroom = 510 - 11 - lnick - lchannel - lhost
 
 
+-- | If Just then send message to the current channel or nick.
+ircReplyMaybe :: Maybe String -> Bot ()
+ircReplyMaybe Nothing        = return ()
+ircReplyMaybe (Just message) = ircReply message
 
 -- | Send a message to the current channel or nick.
 ircReply :: String -> Bot ()

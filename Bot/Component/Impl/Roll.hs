@@ -15,10 +15,10 @@ import System.Random
 rollDice :: Bot Component
 rollDice = command "!roll" rollAction
     where
-        rollAction = (ircReply =<<) . randomI . takeWhile isDigit . unwords
+        rollAction = (ircReplyMaybe =<<) . randomI . takeWhile isDigit . unwords
 
-randomI :: String -> Bot String
-randomI []  =   return "Pigup Pigup Pigup"
-randomI i   =   liftM (show . fst)
-            $   liftIO (fmap (randomR (1, read i :: Int)) newStdGen)
+randomI :: String -> Bot (Maybe String)
+randomI []  =   return Nothing
+randomI i   =   liftM (Just . show . fst)
+            $   liftIO (fmap (randomR (1, read i :: Integer)) newStdGen)
 
