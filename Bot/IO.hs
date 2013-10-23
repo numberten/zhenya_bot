@@ -19,31 +19,40 @@ import Text.Printf
 -- are limited to, it will be broken up into separate messages.
 ircWrite :: String -> String -> Bot ()
 ircWrite command message = do
-	handle  <-  gets socket
-        nick    <-  gets botNick
-        host    <-  gets botHost
-        liftIO $ if command == "PRIVMSG"
-            then    sequence_ (fmap (uncurry3
-                            $   hPrintf handle "%s %s%s\r\n")
+    handle  <-  gets socket
+    nick    <-  gets botNick
+    host    <-  gets botHost
+    liftIO $ if command == "PRIVMSG"
+        then    (sequence_  $   fmap (uncurry3 $ hPrintf handle "%s %s%s\r\n")
                             $   partitionPrivMsg nick host channel message2)
-                >>  printf "> %s %s\n" command message
-            else    hPrintf handle "%s %s\r\n" command message
-                >>  printf "> %s %s\n" command message
+            >>  printf "> %s %s%s\n" command channel message2
+        else    hPrintf handle "%s %s\r\n" command message
+            >>  printf "> %s %s\n" command message
     where
         channel     = takeWhile (/= ':') message ++ ":"
-        message2    = drop 1 $ dropWhile (/= ':') message
+        -- The text of the message minus the channel name and replacing all new
+        -- lines with spaces.
+        message2    =   map (\c -> if c == '\n' || c == '\r' then ' ' else c)
+                    $   drop 1 $ dropWhile (/= ':') message
         uncurry3 f (a,b,c) = f a b c
-        partitionPrivMsg :: String -> String -> String -> String -> [(String,String,String)]
-        partitionPrivMsg n h c m    | messageroom >= lmessage
-                                        = [(command,c,m)]
-                                    | otherwise
-                                        = (command,c,take messageroom m):partitionPrivMsg n h c (drop messageroom m)
+
+        partitionPrivMsg    ::  String -- nick
+                            ->  String -- host
+                            ->  String -- channel
+                            ->  String -- message
+                            ->  [(String,String,String)]
+        partitionPrivMsg n h c m
+            |   messageRoom >= lmessage =   [(command, c, m)]
+            |   otherwise               =   (command, c, messageHead)
+                                        :   partitionPrivMsg n h c messageTail
             where
                 lnick       = length n
                 lhost       = length h
                 lchannel    = length c
                 lmessage    = length m
-                messageroom = 510 - 11 - lnick - lchannel - lhost
+                messageRoom = 510 - 11 - lnick - lchannel - lhost
+                messageHead = take messageRoom m
+                messageTail = drop messageRoom m
 
 
 -- | If Just then send message to the current channel or nick.
