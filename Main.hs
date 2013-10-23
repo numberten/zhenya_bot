@@ -7,6 +7,7 @@ import Bot.Component.Conditional
 import Bot.Component.Fuzzy
 import Bot.Component.Impl.Dictionary
 import Bot.Component.Impl.FileSearch
+import Bot.Component.Impl.Github
 import Bot.Component.Impl.Goodbye
 import Bot.Component.Impl.NGram
 import Bot.Component.Impl.NickCluster
@@ -79,6 +80,7 @@ main = do
         ,   define
         ,   fileSearch
         ,   imitate cnHandle
+        ,   github
         ,   grantOps
         ,   rollDice
         ,   sayGoodbye
