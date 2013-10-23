@@ -11,7 +11,7 @@ Executable zhenya_bot
     ghc-options:    -W
     Main-Is:        Main.hs
     Build-Depends:  base
-                 ,  bytestring              >=  0.10
+                 ,  bytestring              >=  0.9
                  ,  cmdargs                 >=  0.9
                  ,  containers              >=  0.4
                  ,  curl                    >=  1.3
