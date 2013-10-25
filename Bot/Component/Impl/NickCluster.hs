@@ -57,6 +57,7 @@ clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
         action  ::  String -> StateT (S.Set String) (IdentityT Bot) ()
         action  =   nickWatcher
                 +++ commandT "!alias" aliasCommand
+                +++ commandT "!forget" forgetCommand
 
         -- Add every nick to the cache and to the handle's set of nicks
         nickWatcher _ = do
@@ -86,6 +87,12 @@ clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
                 matchedFilter nickSet = not . S.null . S.intersection nickSet
                 unmatchedFilter clusters =
                     (`S.notMember` (S.unions $ S.elems clusters))
+
+        -- Removes a nick from the set of known nicks. It is sometimes necessary
+        -- to manually curate the set of nicks to remove nicks that cause
+        -- clusters to clash.
+        forgetCommand nicks =   modify (flip (foldr S.delete) nicks)
+                            >>  liftBot (ircReply "whoops")
 
         -- Pretty prints a Set String of nicks to irc
         replyClusters = liftBot . ircReply . intercalate ", " . S.elems
