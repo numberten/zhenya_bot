@@ -156,6 +156,10 @@ utterance model =   liftM (cleanUp . unwords . map gramToString)
 
         -- Hand curated rules for fixing spacing after tokenizing
         cleanUp []                          =   []
+        cleanUp (' ':';':[])                =   ";"
+        cleanUp (' ':':':[])                =   ":"
+        cleanUp (' ':')':[])                =   ")"
+        cleanUp ('(':' ':[])                =   "("
         cleanUp (' ':',':[])                =   ","
         cleanUp (' ':'.':[])                =   "."
         cleanUp (' ':'?':[])                =   "?"
