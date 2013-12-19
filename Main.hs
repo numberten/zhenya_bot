@@ -9,6 +9,8 @@ import Bot.Component.Impl.Dictionary
 import Bot.Component.Impl.FileSearch
 import Bot.Component.Impl.Github
 import Bot.Component.Impl.Goodbye
+import Bot.Component.Impl.Grep
+import Bot.Component.Impl.History
 import Bot.Component.Impl.NGram
 import Bot.Component.Impl.NickCluster
 import Bot.Component.Impl.Op
@@ -69,6 +71,7 @@ main :: IO ()
 main = do
     Flags{..}   <-  cmdArgs flagDefinition
     cnHandle    <-  newClusterNickHandle
+    histHandle  <-  newHistoryHandle
     -- Create a directory for runtime data if one does not already exist
     runBot $ defaultBotConfig {
             cfgServer   = serverFlag
@@ -78,11 +81,14 @@ main = do
         ,   cfgNick     = nickFlag
         } `withComponents` [
             clusterNickService cnHandle 0.3
+        ,   historyService histHandle
+
         ,   define
         ,   fileSearch
         ,   imitate cnHandle
         ,   github
         ,   grantOps
+        ,   grep histHandle
         ,   rollDice
         ,   sayGoodbye
         ,   seen cnHandle
