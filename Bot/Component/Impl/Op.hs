@@ -33,3 +33,15 @@ grantOps = mkComponentT $ ding +++ ascend
                         ++  nick
                         ++  "."
 
+        oprah :: String -> IdentityT Bot ()
+        oprah = simpleCommandT "!oprah" (speakOprah >> oprahAction)
+
+        speakOprah  =   lift 
+                    $   ircReply "Everyone gets an op!!!"
+
+        oprahAction =   lift 
+                    $   (++)
+                    <$> gets currentChannel
+                    <*> " +o *"
+                    >>= ircWrite "MODE"
+
