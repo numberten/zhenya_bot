@@ -80,6 +80,13 @@ onPrivMsgT ::  (BotMonad b)
            ->  String -> b ()
 onPrivMsgT action rawMessage =
     case words rawMessage of
+        -- If the server responses to a NAMES query, we add all nicks in
+        -- currentChannel to currentNicks.
+        server:"353":_:"=":_:nicks
+            -> do
+                let currentNicks    = words . drop 1 $ unwords nicks
+                liftBot $ modify (\s -> s {currentNicks})
+                return ()
         sender:"PRIVMSG":channel:message
             ->  do
                 let currentNick     =   drop 1 $ takeWhile (/= '!') sender
@@ -91,8 +98,8 @@ onPrivMsgT action rawMessage =
                                         else currentNick
                 liftBot $ modify (\s -> s {currentChannel, currentNick})
                 action (drop 1 $ unwords message)
-        --- When catching the server's response to our WHO request, log
-        --  our host and store it in state as botHost.
+        -- When catching the server's response to our WHO request, log
+        -- our host and store it in state as botHost.
         _:number:nick:"*":botHost1:botHost2:_
             ->  do
                 ourNick <- liftBot $ gets botNick

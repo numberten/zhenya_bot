@@ -29,6 +29,7 @@ data BotState = BotState {
     ,   components      :: [Component]
     ,   currentChannel  :: String
     ,   currentNick     :: String
+    ,   currentNicks    :: [String]
     ,   botNick         :: String
     ,   botHost         :: String
 }

@@ -13,7 +13,7 @@ import Control.Monad.Trans.Identity
 
 -- | Grant ops via the !ascend or the !ding command.
 grantOps :: Bot Component
-grantOps = mkComponentT $ ding +++ ascend
+grantOps = mkComponentT $ ding +++ ascend +++ oprah
     where
         ding :: String -> IdentityT Bot ()
         ding = simpleCommandT "!ding" dingAction
@@ -34,12 +34,26 @@ grantOps = mkComponentT $ ding +++ ascend
                         ++  "."
 
         oprah :: String -> IdentityT Bot ()
-        oprah = simpleCommandT "!oprah" (speakOprah >> oprahAction)
-
-        speakOprah  =   lift 
-                    $   ircReply "Everyone gets an op!!!"
+        oprah = simpleCommandT "!oprah" (sendNames >> oprahAction)
 
         oprahAction =   lift $ do
-                channel <- gets currentChannel
-                ircWrite "MODE" (channel ++ " +o *")
+            nicks   <- gets currentNicks
+            channel <- gets currentChannel
+            botNick <- gets botNick
+            let ops = map (giveOp channel) 
+                    . map removeOp
+                    . filter (/=botNick) 
+                    $ nicks
+            sequence_ ops
+            ircReply "EVERYONE GETS AN OP!!!!!!"
+            where
+                removeOp ('@':nick) = nick
+                removeOp nick       = nick
 
+                giveOp channel nick = do
+                    ircReply "You get an op!"
+                    ircWrite "MODE" $ channel ++ " +o " ++ nick
+
+        sendNames = lift $ do
+            channel <- gets currentChannel
+            ircWrite "NAMES " channel

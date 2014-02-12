@@ -82,6 +82,7 @@ runBot BotConfig{..}    =   connect
                 ,   botNick         = cfgNick
                 ,   botHost         = ""
                 ,   currentNick     = ""
+                ,   currentNicks    = []
                 ,   currentChannel  = fromMaybe "" $ listToMaybe cfgChannel
                 ,   dataDirectory   = cfgData
                 -- We will update the components in the init method so that they
