@@ -41,14 +41,14 @@ grantOps = mkComponentT $ ding +++ ascend +++ oprah
             channel <- gets currentChannel
             botNick <- gets botNick
             let ops = map (giveOp channel) 
-                    . map removeOp
+                    . filter isntOp
                     . filter (/=botNick) 
                     $ nicks
             sequence_ ops
             ircReply "EVERYONE GETS AN OP!!!!!!"
             where
-                removeOp ('@':nick) = nick
-                removeOp nick       = nick
+                isntOp ('@':_)  = False
+                isntOp _        = True
 
                 giveOp channel nick = do
                     ircReply "You get an op!"

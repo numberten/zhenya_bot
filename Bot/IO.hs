@@ -82,7 +82,7 @@ onPrivMsgT action rawMessage =
     case words rawMessage of
         -- If the server responses to a NAMES query, we add all nicks in
         -- currentChannel to currentNicks.
-        server:"353":_:"=":_:nicks
+        server:"353":_:[x]:_:nicks
             -> do
                 let currentNicks    = words . drop 1 $ unwords nicks
                 liftBot $ modify (\s -> s {currentNicks})
