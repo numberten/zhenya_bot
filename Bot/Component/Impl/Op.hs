@@ -39,9 +39,7 @@ grantOps = mkComponentT $ ding +++ ascend
         speakOprah  =   lift 
                     $   ircReply "Everyone gets an op!!!"
 
-        oprahAction =   lift 
-                    $   (++)
-                    <$> gets currentChannel
-                    <*> " +o *"
-                    >>= ircWrite "MODE"
+        oprahAction =   lift $ do
+                channel <- gets currentChannel
+                ircWrite "MODE" (channel ++ " +o *")
 
