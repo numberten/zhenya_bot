@@ -21,29 +21,34 @@ define = command "!define" defineAction
                         $   "http://www.urbandictionary.com/define.php?term="
                         ++  map (\x -> if x == ' ' then '+' else x)
                                 (unwords words))
-            randomUrl   <-  liftIO
+            redirect    <-  liftIO
                         .   fmap parseTags
                         $   getResponseBody
                         =<< simpleHTTP (getRequest "http://www.urbandictionary.com/random.php")
-            let definitionTags  = drop 1 $ dropWhile (~/= "<div class=\"definition\">") tags
-            let randomUrlStr    = fromAttrib "href" . head $ drop 3 randomUrl
-            randomTags  <- liftIO
-                        . fmap parseTags
-                        $ getResponseBody
-                        =<< simpleHTTP (getRequest randomUrlStr)
-            let randomDefTags   = drop 1 $ dropWhile (~/= "<div class=\"definition\">") randomTags
-            let definition  =   lootTagTexts
-                            $   if lootTagTexts definitionTags == ""
-                                then randomDefTags
-                                else definitionTags
-            ircReply    $ unwords words ++ ": " ++ definition
-        lootTagTexts tags = fst $ foldl f ("", 0) tags
-            where
-                f (str, i) tag  | i < 0             = (str, i)
-                                | isTagText tag     = (str ++ fromTagText tag, i)
-                                | isTagOpen tag     = (str, i+1)
-                                | isTagClose tag    = (str, i-1)
-                                | otherwise         = error "This should never happen!"
 
+            let randomUrl   = fromAttrib "href" . head $ drop 3 redirect
 
+            randomtags  <-  liftIO
+                        .   fmap parseTags
+                        $   getResponseBody
+                        =<< simpleHTTP (getRequest randomUrl)
+
+            let isntNewline = \x -> if x == '\n' then False else True
+
+            let queriedDef  =   drop 1 
+                            .   dropWhile (~/= "<div class=\"meaning\">") 
+                            $   tags
+
+            let randDef     =   drop 1 
+                            .   dropWhile (~/= "<div class=\"meaning\">") 
+                            $   randomtags
+
+            let def = if (queriedDef == []) then randDef else queriedDef
+
+            let definition  =   filter isntNewline
+                            .   fromTagText
+                            .   head
+                            $   def
+
+            ircReply        $   unwords words ++ ": " ++ definition
 
