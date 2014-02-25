@@ -113,4 +113,7 @@ main = do
 
         ,   fuzzyMatch "I'd expect it." 0.1
                 (ircReply "me too")
+
+        ,   fuzzyMatch "Worse than child birth." 0.2
+                (ircReply "Check your priviledge!")
         ]
