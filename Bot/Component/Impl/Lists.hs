@@ -11,6 +11,8 @@ import Control.Monad.State
 import Data.Char (isNumber)
 import qualified Data.Map as M
 
+-- | The lists component allows users to keep lists of things.
+-- It can be queried with the !list command.
 lists :: Bot Component
 lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
     where
@@ -25,11 +27,13 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
         listsAction ("rm":list:xs)      = rmElem list xs
         listsAction _                   = printUsageMessage
 
+        -- Prints usage message.
         printUsageMessage = liftBot $ do
             ircReply "!list show [list]"
             ircReply "!list add list [element]"
             ircReply "!list rm list [element]"
 
+        -- Displays the list of lists.
         showLists = do
             listMap         <-  get
             let speakKeys   =   fmap ircReply 
@@ -38,6 +42,8 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                 [] -> liftBot $ ircReply "Such missing! Much not lists! Wow."
                 _  -> liftBot $ sequence_ speakKeys
 
+        -- Displays the elements in a given list l.
+        -- If l does not exist, exits cleanly.
         showList l = do
             listMap     <-  get
             let result  =   M.lookup l listMap
@@ -54,6 +60,8 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                                     .   map (\(i,(n,_)) -> (show i ++ ") "++n)) 
                                     $   zip [1..] xs
 
+        -- Makes a new empty list l.
+        -- Adds it to the list of lists.
         addList l = do
             listMap     <-  get
             let result  =   M.member l listMap
@@ -66,6 +74,8 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                     liftBot .   ircReply 
                             $   "'"++l++"' added to the list of lists."
 
+        -- Appends an existing list l with a new string xs.
+        -- If l does not exist, exits cleanly.
         addElem l xs = do
             listMap     <-  get
             let result  =   M.lookup l listMap
@@ -90,6 +100,8 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                                 .   ircReply
                                 $   "'"++x++"' already exists within '"++l++"'."
 
+        -- Removes a list l from the list of lists.
+        -- If l does not exist, exits cleanly.
         rmList l = do
             listMap     <-  get
             let result  =   M.member l listMap
@@ -102,6 +114,9 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                         $   "There is no list '"++l++"'."
             put         $   M.delete l listMap
 
+        -- Removes an element xs from an existing list l.
+        -- If either l or xs don't exist, exits cleanly.
+        -- xs can be either the string stored, or its index.
         rmElem l xs = do 
             listMap     <-  get
             let result  =   M.lookup l listMap
@@ -130,6 +145,9 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                             liftBot .   ircReply  
                                     $   "'"++x++"' removed from '"++l++ "'."
             where
+                -- Helper function for removing element, regardless of 
+                -- whether or not 'rmElem' is passed the string to be
+                -- deleted or its current index.
                 remove  :: String
                         -> String
                         -> M.Map String [(String,Bool)]
@@ -140,5 +158,3 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                                             $ take (i-1) lx ++ (drop i lx)) key dic
                                     |   otherwise
                                     =   M.update (return .  filter (\(n,_) -> n /= x)) key dic
-
---Too late for comments, will add tomorrow.
