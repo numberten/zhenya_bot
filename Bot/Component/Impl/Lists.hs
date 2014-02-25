@@ -19,18 +19,19 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
         initialState :: Bot (M.Map String [(String,Bool)])
         initialState = return M.empty
 
-        listsAction ("show":[])         = showLists
-        listsAction ("show":list:[])    = showList list
-        listsAction ("add":list:[])     = addList list
-        listsAction ("add":list:xs)     = addElem list xs
-        listsAction ("rm":list:[])      = rmList list
-        listsAction ("rm":list:xs)      = rmElem list xs
-        listsAction _                   = printUsageMessage
+        listsAction ("show":[])             = showLists
+        listsAction ("show":list:[])        = showList list
+        listsAction ("add":list:[])         = addList list
+        listsAction ("add":"at":i:list:xs)  = addElemAt i list xs
+        listsAction ("add":list:xs)         = addElem list xs
+        listsAction ("rm":list:[])          = rmList list
+        listsAction ("rm":list:xs)          = rmElem list xs
+        listsAction _                       = printUsageMessage
 
         -- Prints usage message.
         printUsageMessage = liftBot $ do
             ircReply "!list show [list]"
-            ircReply "!list add list [element]"
+            ircReply "!list add [at index] list [element]"
             ircReply "!list rm list [element]"
 
         -- Displays the list of lists.
@@ -39,8 +40,9 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
             let speakKeys   =   fmap ircReply 
                             $   M.keys listMap
             case speakKeys of
-                [] -> liftBot $ ircReply "Such missing! Much not lists! Wow."
-                _  -> liftBot $ sequence_ speakKeys
+                []  ->  liftBot 
+                    $   ircReply "Such missing! Much not lists! Wow."
+                _   ->  liftBot $ sequence_ speakKeys
 
         -- Displays the elements in a given list l.
         -- If l does not exist, exits cleanly.
@@ -76,6 +78,7 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
 
         -- Appends an existing list l with a new string xs.
         -- If l does not exist, exits cleanly.
+        -- If xs aleady exists within l, exits cleanly.
         addElem l xs = do
             listMap     <-  get
             let result  =   M.lookup l listMap
@@ -84,8 +87,8 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                 Nothing ->  liftBot 
                         .   ircReply 
                         $   "There is no list '"++l++"'."
-                Just xs ->  do
-                    let result2 = lookup x xs
+                Just ls ->  do
+                    let result2 = lookup x ls
                     case result2 of
                         Nothing -> do
                             put     $   M.update (\lx -> return
@@ -99,6 +102,56 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                         Just _  ->  liftBot
                                 .   ircReply
                                 $   "'"++x++"' already exists within '"++l++"'."
+
+        -- Inserts a new string xs into list l at index i.
+        -- If l does not exist, exits cleanly.
+        -- If xs already exists within l, exits cleanly.
+        -- If i can not be parsed as an number, exits cleanly.
+        addElemAt i l xs = do
+            listMap     <-  get
+            let result  =   M.lookup l listMap
+            let x       =   unwords xs
+            case result of
+                Nothing ->  liftBot
+                        .   ircReply
+                        $   "There is no list '"++l++"'."
+                Just ls ->  do
+                    let b   =   all isNumber i
+                    case b of
+                        False   ->  liftBot
+                                .   ircReply
+                                $   "There is no index '"
+                                ++  i
+                                ++  "' into list '"
+                                ++  l
+                                ++  "'."
+                        True    -> do 
+                            let result2 = lookup x ls
+                            case result2 of
+                                Nothing -> do
+                                    let i'  =   (read i - 1)
+                                    let f   =   \y z 
+                                            ->  y++[(x,False)]++z
+                                    put     $   M.update (\lx -> return
+                                                $ uncurry f 
+                                                (splitAt i' lx)) 
+                                                l 
+                                                listMap
+                                    liftBot .   ircReply
+                                            $   "'" 
+                                            ++  x 
+                                            ++  "' added to '"
+                                            ++  l 
+                                            ++  "' at index '"
+                                            ++  i
+                                            ++  "'."
+                                Just _  ->  liftBot
+                                        .   ircReply
+                                        $   "'"
+                                        ++  x
+                                        ++  "' already exists within '"
+                                        ++  l
+                                        ++  "'."
 
         -- Removes a list l from the list of lists.
         -- If l does not exist, exits cleanly.
@@ -157,4 +210,8 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                                         in M.update (\lx -> return 
                                             $ take (i-1) lx ++ (drop i lx)) key dic
                                     |   otherwise
-                                    =   M.update (return .  filter (\(n,_) -> n /= x)) key dic
+                                    =   M.update (return 
+                                        .  filter (\(n,_) 
+                                        ->  n /= x)) 
+                                            key
+                                            dic
