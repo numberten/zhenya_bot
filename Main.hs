@@ -11,6 +11,7 @@ import Bot.Component.Impl.Github
 import Bot.Component.Impl.Goodbye
 import Bot.Component.Impl.Grep
 import Bot.Component.Impl.History
+import Bot.Component.Impl.Lists
 import Bot.Component.Impl.NGram
 import Bot.Component.Impl.NickCluster
 import Bot.Component.Impl.Op
@@ -89,6 +90,7 @@ main = do
         ,   github
         ,   grantOps
         ,   grep histHandle
+        ,   lists
         ,   rollDice
         ,   sayGoodbye
         ,   seen cnHandle
