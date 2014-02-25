@@ -79,7 +79,7 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                     case result2 of
                         Nothing -> do
                             put     $   M.update (\lx -> return
-                                            $ (x,False):lx) l listMap
+                                            $ lx++[(x,False)]) l listMap
                             liftBot .   ircReply
                                     $   "'" 
                                     ++  x 
