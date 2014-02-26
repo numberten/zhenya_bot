@@ -26,6 +26,7 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
         listsAction ("add":list:xs)         = addElem list xs
         listsAction ("rm":list:[])          = rmList list
         listsAction ("rm":list:xs)          = rmElem list xs
+        listsAction ("check":list:e:xs)     = checkOffElem list (e:xs)
         listsAction _                       = printUsageMessage
 
         -- Prints usage message.
@@ -33,6 +34,7 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
             ircReply "!list show [list]"
             ircReply "!list add [at index] list [element]"
             ircReply "!list rm list [element]"
+            ircReply "!list check list element"
 
         -- Displays the list of lists.
         showLists = do
@@ -59,8 +61,12 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                                 _   ->  liftBot 
                                     $   sequence_
                                     .   map ircReply
-                                    .   map (\(i,(n,_)) -> (show i ++ ") "++n)) 
+                                    .   map (\(i,(n,b)) 
+                                        -> (show i ++ ") "
+                                        ++ if b then st n else n)) 
                                     $   zip [1..] xs
+            where
+                st  =   (("\204\182" ++) . return =<<)
 
         -- Makes a new empty list l.
         -- Adds it to the list of lists.
@@ -178,13 +184,13 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                 Nothing ->  liftBot
                         .   ircReply
                         $   "There is no list '"++l++"'."
-                Just xs ->  do
+                Just ls ->  do
                     --Safe due to short circuit.
-                    let result1 =   lookup x xs
+                    let result1 =   lookup x ls
                     let result2 =   (,) result1
                                 $   all isNumber x
                                 &&  read x
-                                <=  length xs
+                                <=  length ls
                     case result2 of
                         (Nothing,False) ->  liftBot
                                         .   ircReply 
@@ -208,10 +214,80 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                 remove x key dic    |   and $ map isNumber x
                                     =   let i = read x
                                         in M.update (\lx -> return 
-                                            $ take (i-1) lx ++ (drop i lx)) key dic
+                                            $ take (i-1) lx ++ (drop i lx))
+                                              key 
+                                              dic
                                     |   otherwise
                                     =   M.update (return 
                                         .  filter (\(n,_) 
                                         ->  n /= x)) 
                                             key
                                             dic
+
+        -- Checks an element l off from an existing list l.
+        -- If either l or xs don't exist, exits cleanly.
+        -- xs can be either the string stored, or its index.
+        -- Will un-checkoff an already checked off element.
+        checkOffElem l xs = do 
+            listMap     <-  get
+            let result  =   if xs == [] 
+                                then Nothing 
+                                else M.lookup l listMap
+            let x       =   unwords xs
+            case result of 
+                Nothing ->  liftBot
+                        .   ircReply
+                        $   "There is no list '"++l++"'."
+                Just ls ->  do
+                    --Safe due to short circuit.
+                    let result1 =   lookup x ls
+                    let result2 =   (,) result1
+                                $   all isNumber x
+                                &&  read x
+                                <=  length ls
+                    case result2 of
+                        (Nothing,False) ->  liftBot
+                                        .   ircReply 
+                                        $   "'"
+                                        ++  x
+                                        ++  "' does not exist within list '"
+                                        ++  l
+                                        ++  "'."
+                        _           ->  do 
+                            put     $   check x l listMap 
+                            liftBot .   ircReply  
+                                    $   "'"++x++"' checked off from list '"++l++ "'."
+            where
+                -- Flips the checked flag.
+                flip' (str,b) = (str,not b)
+                -- Helper function for flipping checked bit.
+                -- Accepts both the name of elements to check off,
+                -- or their indexes in a given list.
+                check   :: String
+                        -> String
+                        -> M.Map String [(String,Bool)]
+                        -> M.Map String [(String,Bool)]
+                check x key dic |   and $ map isNumber x
+                                = do
+                                    let i       =   read x
+                                    let start   =   take (i - 1)
+                                    let end'    =   drop (i-1)
+                                    let mid     =   flip'
+                                                .   head 
+                                                .   end'
+                                    let end     =   tail
+                                                .   end'
+                                    let f       =   \ls 
+                                                ->  return
+                                                $   (start ls)
+                                                ++  [mid ls]
+                                                ++  (end ls)
+                                    M.update f key dic
+                                |   otherwise
+                                = do 
+                                    let f'  =   \t@(n,_)
+                                            ->  if n == x
+                                                    then flip' t
+                                                    else t
+                                    let f   = return . map f'
+                                    M.update f key dic
