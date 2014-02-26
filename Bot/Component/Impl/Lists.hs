@@ -27,6 +27,7 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
         listsAction ("rm":list:[])          = rmList list
         listsAction ("rm":list:xs)          = rmElem list xs
         listsAction ("check":list:e:xs)     = checkOffElem list (e:xs)
+        listsAction ("flush":list:[])       = flushList list
         listsAction _                       = printUsageMessage
 
         -- Prints usage message.
@@ -35,6 +36,7 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
             ircReply "!list add [at index] list [element]"
             ircReply "!list rm list [element]"
             ircReply "!list check list element"
+            ircReply "!list flush list"
 
         -- Displays the list of lists.
         showLists = do
@@ -291,3 +293,19 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
                                                     else t
                                     let f   = return . map f'
                                     M.update f key dic
+
+        -- Flushes some list, l. Flushing removes
+        -- all checked off elements. Exits cleanly,
+        -- if no list l exists.
+        flushList l = do
+            listMap     <-  get
+            let result  =   M.lookup l listMap
+            case result of
+                Nothing ->  liftBot
+                        .   ircReply
+                        $   "There is no list '"++l++"'."
+                Just _  ->  do
+                    let f   =   filter (\(_,b) -> not b)
+                    put     $   M.map f listMap
+                    liftBot .   ircReply
+                            $   "Flushing '"++l++"'."
