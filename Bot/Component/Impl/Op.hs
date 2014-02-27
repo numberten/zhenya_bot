@@ -54,6 +54,4 @@ grantOps = mkComponentT $ ding +++ ascend +++ oprah
                     ircReply "You get an op!"
                     ircWrite "MODE" $ channel ++ " +o " ++ nick
 
-        sendNames = lift $ do
-            channel <- gets currentChannel
-            ircWrite "NAMES " channel
+        sendNames = lift ircNames

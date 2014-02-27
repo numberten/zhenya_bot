@@ -4,6 +4,7 @@ module Bot.IO (
 ,   ircReply
 ,   ircReplyMaybe
 ,   ircReplyTo
+,   ircNames
 ,   onPrivMsg
 ,   onPrivMsgT
 )   where
@@ -72,6 +73,11 @@ ircReplyTo channel message  = ircWrite "PRIVMSG" (channel ++ " :" ++ message)
 onPrivMsg   ::  (String -> Bot ())
             ->  String -> Bot ()
 onPrivMsg action = runIdentityT . onPrivMsgT (IdentityT . action)
+
+-- | Send a NAMES query to the current channel.
+ircNames :: Bot ()
+ircNames    =   gets currentChannel
+            >>= ircWrite "NAMES " 
 
 -- | Filters out IRC messages that are not PRIVMSG's. In the event of a PRIVMSG,
 -- the relevant part of the message is passed to the action function.
