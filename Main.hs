@@ -19,6 +19,7 @@ import Bot.Component.Impl.Roll
 import Bot.Component.Impl.Uptime
 import Bot.Component.Impl.Seen
 import Bot.Component.Impl.Spotify
+import Bot.Component.Impl.Stalker
 import Bot.Component.Impl.Youtube
 import Bot.IO
 
@@ -95,6 +96,7 @@ main = do
         ,   sayGoodbye
         ,   seen cnHandle
         ,   spotify
+        ,   stalker
         ,   uptime
         ,   youtube
 

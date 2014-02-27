@@ -34,7 +34,7 @@ grantOps = mkComponentT $ ding +++ ascend +++ oprah
                         ++  "."
 
         oprah :: String -> IdentityT Bot ()
-        oprah = simpleCommandT "!oprah" (sendNames >> oprahAction)
+        oprah = simpleCommandT "!oprah" oprahAction
 
         oprahAction =   lift $ do
             nicks   <- gets currentNicks
@@ -53,5 +53,3 @@ grantOps = mkComponentT $ ding +++ ascend +++ oprah
                 giveOp channel nick = do
                     ircReply "You get an op!"
                     ircWrite "MODE" $ channel ++ " +o " ++ nick
-
-        sendNames = lift ircNames
