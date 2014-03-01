@@ -15,7 +15,7 @@ github = mkComponentT $ regexT pattern action
     where
         -- Matches the message the github nick sends to the channel whenever
         -- there is a new commit in the zhenya_bot repo.
-        pattern = "^\\[...zhenya_bot.\\] ...[^ ]+. pushed .[0-9]+. new commits to ...master.:"
+        pattern = "^\\[...zhenya_bot.\\] ...[^ ]+. (pushed .[0-9]+. new commit(s?) |merged ...[^ ]+. in)to ...master.:"
 
         action :: String -> IdentityT Bot ()
         action  =   const $ (setExitCode Update

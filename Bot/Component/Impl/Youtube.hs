@@ -6,13 +6,10 @@ import Bot.Component
 import Bot.Component.Regex
 import Bot.IO
 
-import Control.Monad
 import Data.List (isPrefixOf)
-import Data.Maybe (isJust)
 import Network.Curl
-import Network.Curl.Opts
 import Text.HTML.TagSoup
-import Text.Regex
+import Text.Regex.TDFA
 
 youtube :: Bot Component
 youtube = regex pattern linkHandler
@@ -40,7 +37,7 @@ scrape url = do
                     $   tags
     let time        =   tagToTime
                     .   head
-                    .   filter (isJust . match . fromTagText)
+                    .   filter (matchTest regex . fromTagText)
                     .   filter isTagText
                     $   tags
     return          $   title ++ time
@@ -56,6 +53,5 @@ scrape url = do
                         .   reverse
                         $   fromTagText tag
         -- | Regex for matching a video duration.
-        match           =   matchRegex 
-                        $   mkRegex "^\n[0-9]+:[0-9]+\n$"
-
+        regex :: Text.Regex.TDFA.Regex
+        regex           =   makeRegex "^\n[0-9]+:[0-9]+\n$"

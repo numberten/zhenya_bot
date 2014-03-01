@@ -29,7 +29,6 @@ Executable zhenya_bot
                  ,  random                  >=  1.0
                  ,  random-fu               >=  0.2
                  ,  regex-tdfa              >=  1.0
-                 ,  regex-compat            >=  0.95
                  ,  strict                  >=  0.3
                  ,  tagsoup                 >=  0.12
                  ,  tokenize                >=  0.1

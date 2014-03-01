@@ -32,5 +32,18 @@ regexT ::  BotMonad b
        ->  String -> b ()
 regexT pattern action   =   onPrivMsgT
                         $   mapM_ action
-                        .   concat . (=~ pattern)
-
+                        .   concat
+                        .   match regex
+    where
+        -- | Generate a regex with specific configurations.
+        regex       =   makeRegexOpts compOption execOption pattern
+        compOption  =   CompOption {
+                        caseSensitive   = True
+                    ,   multiline       = True
+                    ,   rightAssoc      = True
+                    ,   newSyntax       = True
+                    ,   lastStarGreedy  = True
+                    }
+        execOption  =   ExecOption {
+                        captureGroups = False
+                    }
