@@ -117,5 +117,5 @@ main = do
                 (ircReply "me too")
 
         ,   fuzzyMatch "Worse than child birth." 0.2
-                (ircReply "Check your priviledge!")
+                (ircReply "Check your privilege!")
         ]
