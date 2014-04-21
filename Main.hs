@@ -15,6 +15,7 @@ import Bot.Component.Impl.Lists
 import Bot.Component.Impl.NGram
 import Bot.Component.Impl.NickCluster
 import Bot.Component.Impl.Op
+import Bot.Component.Impl.Queens
 import Bot.Component.Impl.Roll
 import Bot.Component.Impl.Uptime
 import Bot.Component.Impl.Seen
@@ -92,6 +93,7 @@ main = do
         ,   grantOps
         ,   grep histHandle
         ,   lists
+        ,   calcQueens
         ,   rollDice
         ,   sayGoodbye
         ,   seen cnHandle
