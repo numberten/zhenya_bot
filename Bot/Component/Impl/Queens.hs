@@ -32,4 +32,4 @@ safe (x:xs) = and (map (\f -> safeDiag (f) (f x 1) xs) [ (+), (-) ])
 safeDiag :: ( Int -> Int -> Int ) -> Int -> [Int] -> Bool
 safeDiag _ _ [] = True
 safeDiag f field (x:xs) = field /= x && safeDiag f y xs
-  where y = f x 1
+  where y = f field 1
