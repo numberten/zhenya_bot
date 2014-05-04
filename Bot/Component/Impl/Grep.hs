@@ -10,6 +10,7 @@ import Bot.IO
 
 import Control.Applicative
 import Control.Monad.Trans.Identity
+import Data.List
 import Text.Regex.TDFA
 import qualified Data.Foldable as F
 import qualified Data.Sequence as S
@@ -30,9 +31,14 @@ grep handle = mkComponentT $ commandT "!grep" action
             -- ignore the last utterance for grepping
             history <-  (S.take <$> (\x -> x - 1) . S.length <*> id)
                     <$> getHistory handle
-            let pred    =   (&&)
-                        <$> (=~ pattern) . snd
-                        <*> ((|| (nick == "")) . (== nick)) . fst
+            let pred    =   and . flip ((<**>) . return) [
+                            -- Optionally filter by nick
+                            ((|| (nick == "")) . (== nick)) . fst
+                            -- Filter previous greps
+                        ,   not . isPrefixOf "!grep" . snd
+                            -- Matches the given regular expression
+                        ,   (=~ pattern) . snd
+                        ]
             liftBot $ case S.findIndexR pred history of
                 Nothing     -> ircReply "Ain't no one ever said no such thing!"
                 Just index  -> do
@@ -43,8 +49,9 @@ grep handle = mkComponentT $ commandT "!grep" action
                         ircReply $ concat ["<", nick, "> ", message]
 
         -- Parse flags out of arguments. Not going to win any awards for
-        -- implementation here, but since there are only two flags, it's easier
-        -- to enumerate the possible combinations than it is to import Parsec.
+        -- implementation here, but since there are only two flags, it's
+        -- easier to enumerate the possible combinations than it is to
+        -- import Parsec.
         parseArgs :: [String] -> GrepOptions
         parseArgs ("-n":nick:"-c":context:rest) = makeOptions nick context rest
         parseArgs ("-c":context:"-n":nick:rest) = makeOptions nick context rest
@@ -52,8 +59,8 @@ grep handle = mkComponentT $ commandT "!grep" action
         parseArgs ("-c":context:rest)           = makeOptions "" context rest
         parseArgs rest                          = makeOptions "" "0" rest
 
-        -- Helper function to parseArgs, converts raw strings and lists into
-        -- final types for the GrepOptions record.
+        -- Helper function to parseArgs, converts raw strings and lists
+        -- into final types for the GrepOptions record.
         makeOptions :: String -> String -> [String] -> GrepOptions
         makeOptions nick context rest = GrepOptions {
                 context = read context -- will fail if bad, but we are sandboxed
