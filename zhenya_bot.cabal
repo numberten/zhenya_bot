@@ -25,11 +25,12 @@ Executable zhenya_bot
                  ,  mtl                     >=  2.0
                  ,  network                 >=  2.3
                  ,  old-time                >=  1.1
-                 ,  time                    >=  1.4
                  ,  random                  >=  1.0
                  ,  random-fu               >=  0.2
                  ,  regex-tdfa              >=  1.0
+                 ,  stm                     >=  2.4.2
                  ,  strict                  >=  0.3
                  ,  tagsoup                 >=  0.12
+                 ,  time                    >=  1.4
                  ,  tokenize                >=  0.1
                  ,  transformers            >=  0.2

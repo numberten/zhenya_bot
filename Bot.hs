@@ -16,6 +16,8 @@ import Bot.Component.Impl.Reboot
 import Bot.IO
 
 import Control.Applicative
+import Control.Concurrent
+import Control.Concurrent.STM
 import Control.Monad
 import Control.Monad.Catch
 import Control.Monad.State
@@ -35,6 +37,7 @@ data BotConfig = BotConfig {
     ,   cfgNick        :: String
     ,   cfgChannel     :: [String]
     ,   cfgComponents  :: [Bot Component]
+    ,   cfgWriteRate   :: Double
 }
 
 -- | A default `BotConfig` containing `BotComponent`s that are likely wanted by
@@ -49,6 +52,7 @@ defaultBotConfig = BotConfig {
             pingPong
         ,   reboot
     ]
+    ,   cfgWriteRate    = 5
 }
 
 -- | There are some components in the `defaultBotConfig` that probably should not
@@ -75,6 +79,7 @@ runBot BotConfig{..}    =   connect
             createDirectoryIfMissing True cfgData
             socket      <-  connectTo cfgServer
                         $   PortNumber (fromIntegral cfgPort)
+            chan        <-  atomically newTChan
             hSetBuffering socket NoBuffering
             return BotState {
                     socket
@@ -88,6 +93,7 @@ runBot BotConfig{..}    =   connect
                 -- We will update the components in the init method so that they
                 -- can be evaluated within the Bot monad
                 ,   components      = []
+                ,   messageQueue    = chan
             }
 
         -- Close the socket and return with the desired exit code.
@@ -98,6 +104,9 @@ runBot BotConfig{..}    =   connect
         -- Connect to the desired channels, and set up the nick
         init :: [Bot Component] -> Bot ()
         init cfgComponents = do
+            handle    <- gets socket
+            chan      <- gets messageQueue
+            liftIO $ forkIO $ ircWriteLoop chan handle cfgWriteRate
             ircWrite "NICK" cfgNick
             ircWrite "USER" $ cfgNick ++ " 0 * :Greatest Guys bot"
             ircWrite "WHO" cfgNick

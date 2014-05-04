@@ -1,6 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 module Bot.IO (
     ircWrite
+,   ircWriteLoop
 ,   ircReply
 ,   ircReplyMaybe
 ,   ircReplyTo
@@ -11,31 +12,53 @@ module Bot.IO (
 
 import Bot.Component
 
+import Control.Concurrent
+import Control.Concurrent.STM
 import Control.Monad.State
 import Control.Monad.Trans.Identity
+import Data.Time.Clock
+import System.IO
 import Text.Printf
+
+-- | Reads a message from the queue and forwards to IRC.
+-- Ensures that there is at minimum 1 / writeRate seconds between each
+-- message.
+ircWriteLoop :: TChan String -> Handle -> Double -> IO ()
+ircWriteLoop chan handle writeRate = forever $ do
+  let delay =  ceiling $ (1 / writeRate) * 1000000
+  start     <- getCurrentTime
+  message   <- atomically $ readTChan chan
+  end       <- getCurrentTime
+  let left  = delay - (ceiling $ diffUTCTime end start * 1000000)
+  when (left > 0) (threadDelay left)
+  liftIO $ hPutStr handle message
 
 -- | Write a `String` message to IRC.
 -- If the string doesn't fit in the 512 char length that IRC messages
 -- are limited to, it will be broken up into separate messages.
 ircWrite :: String -> String -> Bot ()
 ircWrite command message = do
-    handle  <-  gets socket
     nick    <-  gets botNick
     host    <-  gets botHost
-    liftIO $ if command == "PRIVMSG"
-        then    (sequence_  $   fmap (uncurry3 $ hPrintf handle "%s %s%s\r\n")
-                            $   partitionPrivMsg nick host channel message2)
-            >>  printf "> %s %s%s\n" command channel message2
-        else    hPrintf handle "%s %s\r\n" command message
-            >>  printf "> %s %s\n" command message
+    if command == "PRIVMSG"
+        then    (sequence_  $ map writeToLoop
+                            $ map (uncurry3 $ printf "%s %s%s\r\n")
+                            $ partitionPrivMsg nick host channel message2)
+            >>  (liftIO $ printf "> %s %s%s\n" command channel message2)
+        else    writeToLoop (printf "%s %s\r\n" command message)
+            >>  (liftIO $ printf "> %s %s\n" command message)
     where
         channel     = takeWhile (/= ':') message ++ ":"
-        -- The text of the message minus the channel name and replacing all new
-        -- lines with spaces.
+        -- The text of the message minus the channel name and replacing all
+        -- new lines with spaces.
         message2    =   map (\c -> if c == '\n' || c == '\r' then ' ' else c)
                     $   drop 1 $ dropWhile (/= ':') message
         uncurry3 f (a,b,c) = f a b c
+
+        writeToLoop :: String -> Bot ()
+        writeToLoop msg = do
+            queue <- gets messageQueue
+            liftIO $ atomically $ writeTChan queue msg
 
         partitionPrivMsg    ::  String -- nick
                             ->  String -- host
@@ -88,7 +111,7 @@ onPrivMsgT action rawMessage =
     case words rawMessage of
         -- If the server responses to a NAMES query, we add all nicks in
         -- currentChannel to currentNicks.
-        server:"353":_:[x]:_:nicks
+        _:"353":_:[_]:_:nicks
             -> do
                 let currentNicks    = words . drop 1 $ unwords nicks
                 liftBot $ modify (\s -> s {currentNicks})

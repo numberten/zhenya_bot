@@ -14,6 +14,7 @@ module Bot.Component (
 )   where
 
 import Control.Applicative
+import Control.Concurrent.STM.TChan
 import Control.Monad.State
 import Control.Monad.Trans.Identity
 import System.Exit
@@ -32,6 +33,7 @@ data BotState = BotState {
     ,   currentNicks    :: [String]
     ,   botNick         :: String
     ,   botHost         :: String
+    ,   messageQueue    :: TChan String
 }
 
 -- | A type synonym for the Bot monad.

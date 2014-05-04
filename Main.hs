@@ -35,6 +35,7 @@ data Flags = Flags {
     ,   nickFlag    ::  String
     ,   channelFlag ::  [String]
     ,   dataFlag    ::  FilePath
+    ,   writeFlag   ::  Double
 } deriving (Data, Typeable, Show)
 
 -- | Declare the default values, help strings and options values for each of the
@@ -65,6 +66,11 @@ flagDefinition = Flags {
                     &=  help "The directory persistent files should be stored"
                     &=  name "data"
                     &=  typ "Directory"
+    ,   writeFlag   =   5  -- One second
+                    &=  explicit
+                    &=  help "Number of IRC writes per second."
+                    &=  name "write-rate"
+                    &=  typ "Double"
 }   &=  summary "Greatest guys IRC bot"
     &=  program "zhenya_bot"
 
@@ -77,11 +83,12 @@ main = do
     histHandle  <-  newHistoryHandle
     -- Create a directory for runtime data if one does not already exist
     runBot $ defaultBotConfig {
-            cfgServer   = serverFlag
-        ,   cfgPort     = portFlag
-        ,   cfgData     = dataFlag
-        ,   cfgChannel  = nub channelFlag
-        ,   cfgNick     = nickFlag
+            cfgServer     = serverFlag
+        ,   cfgPort       = portFlag
+        ,   cfgData       = dataFlag
+        ,   cfgChannel    = nub channelFlag
+        ,   cfgNick       = nickFlag
+        ,   cfgWriteRate  = writeFlag
         } `withComponents` [
             clusterNickService cnHandle 0.3
         ,   historyService histHandle
