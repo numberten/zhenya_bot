@@ -17,6 +17,7 @@ import qualified Data.Sequence as S
 
 data GrepOptions = GrepOptions {
         context :: Int
+    ,   matches :: Int
     ,   nick    :: String
     ,   pattern :: String
 }
@@ -39,9 +40,12 @@ grep handle = mkComponentT $ commandT "!grep" action
                             -- Matches the given regular expression
                         ,   (=~ pattern) . snd
                         ]
-            liftBot $ case S.findIndexR pred history of
-                Nothing     -> ircReply "Ain't no one ever said no such thing!"
-                Just index  -> do
+            let found   =   reverse  -- display in chronological order
+                        $   take matches
+                        $   S.findIndicesR pred history
+            liftBot $ case found of
+                []      -> ircReply "Ain't no one ever said no such thing!"
+                indices -> flip mapM_ indices $ \index -> do
                     let beginIndex  =   max 0 (index - context)
                     let lines       =   S.take (context * 2 + 1)
                                     $   S.drop beginIndex history
@@ -49,21 +53,30 @@ grep handle = mkComponentT $ commandT "!grep" action
                         ircReply $ concat ["<", nick, "> ", message]
 
         -- Parse flags out of arguments. Not going to win any awards for
-        -- implementation here, but since there are only two flags, it's
-        -- easier to enumerate the possible combinations than it is to
+        -- implementation here, but since there are only a couple flags,
+        -- it's easier to enumerate the possible combinations than it is to
         -- import Parsec.
         parseArgs :: [String] -> GrepOptions
-        parseArgs ("-n":nick:"-c":context:rest) = makeOptions nick context rest
-        parseArgs ("-c":context:"-n":nick:rest) = makeOptions nick context rest
-        parseArgs ("-n":nick:rest)              = makeOptions nick "0" rest
-        parseArgs ("-c":context:rest)           = makeOptions "" context rest
-        parseArgs rest                          = makeOptions "" "0" rest
+        parseArgs = parse "" "0" "1"
+
+        parse :: String -> String -> String -> [String] -> GrepOptions
+        parse _    ctx num ("-n":nick:xs) = parse nick ctx num xs
+        parse nick _   num ("-c":ctx:xs)  = parse nick ctx num xs
+        parse nick ctx _   ("-m":num:xs)  = parse nick ctx num xs
+        parse nick ctx num xs             = makeOptions nick ctx num xs
 
         -- Helper function to parseArgs, converts raw strings and lists
         -- into final types for the GrepOptions record.
-        makeOptions :: String -> String -> [String] -> GrepOptions
-        makeOptions nick context rest = GrepOptions {
-                context = read context -- will fail if bad, but we are sandboxed
-            ,   nick    = nick
+        makeOptions :: String
+                    -> String
+                    -> String
+                    -> [String]
+                    -> GrepOptions
+        makeOptions nick context number rest = GrepOptions {
+                nick    = nick
             ,   pattern = if null rest then "." else unwords rest
+                -- These will fail if bad, but we are sandboxed, so it's
+                -- whatever.
+            ,   context = read context
+            ,   matches = read number
             }
