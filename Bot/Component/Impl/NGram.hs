@@ -46,10 +46,13 @@ imitate handle = stateful commandAction initialState
         -- each unique nick seen.
         initialState :: Bot ImitateState
         initialState = do
-            log             <-  logPath >>= liftIO . readFile
-            let logLines    =   lines log
-            let allMessages =   groupByName $ map processLine logLines
-            return $ M.map (createModel . concatMap bigrams) allMessages
+            log           <-  logPath >>= liftIO . readFile
+            let logLines  =   lines log
+            let messages  =   groupByName $ map processLine logLines
+            let state     =   M.map (createModel . concatMap bigrams) messages
+            -- Force the evaluation of each model
+            liftIO $ mapM_ (utterance . snd) $ M.toList state
+            return state
 
         -- Returns the nick of the same cluster as the one given that is used as
         -- the key for the map of nicks to models.
