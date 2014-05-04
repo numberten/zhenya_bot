@@ -12,6 +12,7 @@ import Bot.IO
 import Control.Applicative
 import Control.Arrow
 import Control.Monad
+import Control.Monad.Error
 import Control.Monad.State
 import Control.Monad.Trans.Identity
 import Data.Char
@@ -46,7 +47,8 @@ imitate handle = stateful commandAction initialState
         -- each unique nick seen.
         initialState :: Bot ImitateState
         initialState = do
-            log           <-  logPath >>= liftIO . readFile
+            log           <-  (logPath >>= liftIO . readFile)
+                                  `catchError` const (return "")
             let logLines  =   lines log
             let messages  =   groupByName $ map processLine logLines
             let state     =   M.map (createModel . concatMap bigrams) messages

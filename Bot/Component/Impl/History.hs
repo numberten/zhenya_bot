@@ -11,6 +11,7 @@ import Bot.IO
 
 import Control.Applicative
 import Control.Concurrent
+import Control.Monad.Error
 import Control.Monad.State
 import Prelude hiding (readFile)
 import System.FilePath
@@ -53,7 +54,8 @@ historyService handle =  loadLog >> mkComponent action
         loadLog = do
             logFile <- logPath
             liftIO $ do
-                log     <- map splitLine . lines <$> readFile logFile
+                log     <- (map splitLine . lines <$> readFile logFile)
+                              `catchError` const (return [])
                 putMVar handle (S.fromList log)
 
         splitLine =   (,)

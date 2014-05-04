@@ -104,11 +104,12 @@ clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
         clusterTimer = do
             ClusterNickInfo{..} <-  readMVar handle
             let nickList        =   S.elems seenNicks
-            let !clusters       =   S.fromList
+            let clusters        =   S.fromList
                                 $   map (S.fromList . elements)
                                 $   dendrogram CompleteLinkage nickList distance
                                     `cutAt` threshold
-            modifyMVar_ handle (\info -> return info {clusters})
+            unless (null nickList) $
+                modifyMVar_ handle (\info -> return info {clusters})
 
         -- The distance function used for clustering. The distance between two
         -- nicks a and b is defined to be 1 - lcs(a,b)/(min(|a|,|b|). Or in
