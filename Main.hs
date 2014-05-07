@@ -78,9 +78,10 @@ flagDefinition = Flags {
 -- and start the IRC bot.
 main :: IO ()
 main = do
-    Flags{..}   <-  cmdArgs flagDefinition
-    cnHandle    <-  newClusterNickHandle
-    histHandle  <-  newHistoryHandle
+    Flags{..}     <-  cmdArgs flagDefinition
+    cnHandle      <-  newClusterNickHandle
+    histHandle    <-  newHistoryHandle
+    stalkerHandle <-  newStalkerHandle
     -- Create a directory for runtime data if one does not already exist
     runBot $ defaultBotConfig {
             cfgServer     = serverFlag
@@ -92,12 +93,13 @@ main = do
         } `withComponents` [
             clusterNickService cnHandle 0.3
         ,   historyService histHandle
+        ,   stalker stalkerHandle
 
         ,   define
         ,   fileSearch
         ,   imitate cnHandle
         ,   github
-        ,   grantOps
+        ,   grantOps stalkerHandle
         ,   grep histHandle
         ,   lists
         ,   calcQueens
@@ -105,7 +107,6 @@ main = do
         ,   sayGoodbye
         ,   seen cnHandle
         ,   spotify
-        ,   stalker
         ,   uptime
         ,   youtube
 

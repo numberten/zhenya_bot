@@ -5,15 +5,18 @@ module Bot.Component.Impl.Op (
 import Bot.Component
 import Bot.Component.Combinator
 import Bot.Component.Command
+import Bot.Component.Impl.Stalker
 import Bot.IO
+
+import Debug.Trace
 
 import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Trans.Identity
 
 -- | Grant ops via the !ascend or the !ding command.
-grantOps :: Bot Component
-grantOps = mkComponentT $ ding +++ ascend +++ oprah
+grantOps :: StalkerHandle -> Bot Component
+grantOps stalker = mkComponentT $ ding +++ ascend +++ oprah
     where
         ding :: String -> IdentityT Bot ()
         ding = simpleCommandT "!ding" dingAction
@@ -37,19 +40,18 @@ grantOps = mkComponentT $ ding +++ ascend +++ oprah
         oprah = simpleCommandT "!oprah" oprahAction
 
         oprahAction =   lift $ do
-            nicks   <- gets currentNicks
             channel <- gets currentChannel
+            nicks   <- getNicksOnChannel stalker channel
             botNick <- gets botNick
-            let ops = map (giveOp channel) 
-                    . filter isntOp
-                    . filter (/=botNick) 
+            trace botNick $ return ()
+            let ops = map (giveOp channel)
+                    . filter (/= botNick)
+                    . map snd
+                    . filter ((/= Op) . fst)
                     $ nicks
             sequence_ ops
             ircReply "EVERYONE GETS AN OP!!!!!!"
             where
-                isntOp ('@':_)  = False
-                isntOp _        = True
-
                 giveOp channel nick = do
                     ircReply "You get an op!"
                     ircWrite "MODE" $ channel ++ " +o " ++ nick

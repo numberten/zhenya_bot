@@ -5,7 +5,6 @@ module Bot.IO (
 ,   ircReply
 ,   ircReplyMaybe
 ,   ircReplyTo
-,   ircNames
 ,   onPrivMsg
 ,   onPrivMsgT
 )   where
@@ -16,6 +15,7 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad.State
 import Control.Monad.Trans.Identity
+import Debug.Trace -- todo remove me
 import Data.Time.Clock
 import System.IO
 import Text.Printf
@@ -97,11 +97,6 @@ onPrivMsg   ::  (String -> Bot ())
             ->  String -> Bot ()
 onPrivMsg action = runIdentityT . onPrivMsgT (IdentityT . action)
 
--- | Send a NAMES query to the current channel.
-ircNames :: Bot ()
-ircNames    =   gets currentChannel
-            >>= ircWrite "NAMES " 
-
 -- | Filters out IRC messages that are not PRIVMSG's. In the event of a PRIVMSG,
 -- the relevant part of the message is passed to the action function.
 onPrivMsgT ::  (BotMonad b)
@@ -109,13 +104,6 @@ onPrivMsgT ::  (BotMonad b)
            ->  String -> b ()
 onPrivMsgT action rawMessage =
     case words rawMessage of
-        -- If the server responses to a NAMES query, we add all nicks in
-        -- currentChannel to currentNicks.
-        _:"353":_:[_]:_:nicks
-            -> do
-                let currentNicks    = words . drop 1 $ unwords nicks
-                liftBot $ modify (\s -> s {currentNicks})
-                return ()
         sender:"PRIVMSG":channel:message
             ->  do
                 let currentNick     =   drop 1 $ takeWhile (/= '!') sender
