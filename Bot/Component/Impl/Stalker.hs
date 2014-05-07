@@ -13,7 +13,7 @@ import Control.Applicative
 import Control.Concurrent.STM
 import Control.Monad.State
 import Data.Maybe
-import qualified Data.Map.Strict as M
+import qualified Data.Map as M
 
 -- | Denotes if the nick has op, voice, or nothing in a channel.
 data NickStatus = Op | Voice | Normal
