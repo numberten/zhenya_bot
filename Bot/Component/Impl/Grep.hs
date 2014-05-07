@@ -26,7 +26,7 @@ grep :: HistoryHandle -> Bot Component
 grep handle = mkComponentT $ commandT "!grep" action
     where
         action :: [String] -> IdentityT Bot ()
-        action []   = liftBot $ ircReply "!grep [-c int] [-n nick] regex"
+        action []   = liftBot $ ircReply "!grep [-c int] [-n nick] [-m matches] regex"
         action args = do
             let GrepOptions{..} = parseArgs args
             -- ignore the last utterance for grepping
