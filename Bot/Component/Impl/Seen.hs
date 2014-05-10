@@ -55,8 +55,10 @@ seenLoggerAction = do
 
 -- | Responds to !seen commands.
 seenCommand :: ClusterNickHandle -> String -> StateT TimeMap (IdentityT Bot) ()
-seenCommand cnHandle = commandT "!seen" $ seenCommandAction cnHandle
+seenCommand cnHandle = commandT usage "!seen" $ seenCommandAction cnHandle
 
+-- The usage message, in case no arguments are passed.
+usage = UsageMessage ["usage: !seen nick"]
 seenCommandAction   ::  ClusterNickHandle
                     ->  [String]
                     ->  StateT TimeMap (IdentityT Bot) ()

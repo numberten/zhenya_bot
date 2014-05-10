@@ -91,7 +91,7 @@ imitate handle = stateful commandAction initialState
 
         -- First attempts to group nicks together based on clusters, and then
         -- generates a sentence in the literary stylings of the given nick.
-        commandAction = commandT "!be" $ \args -> case args of
+        commandAction = commandT usage "!be" $ \args -> case args of
             [nick]  -> do
                 mergeModels
                 keyNick         <-  canonicalNick nick
@@ -101,6 +101,9 @@ imitate handle = stateful commandAction initialState
                     liftBot $ ircReply message
                 fromMaybe (liftBot $ ircReply "not a guy.") sayMessage
             _       -> liftBot $ ircReply "be who?"
+
+        -- The usage message, in case no arguments are passed.
+        usage = UsageMessage ["usage: !be nick"]
 
 -- | Process a line from the specially formatted log file.
 processLine :: String -> (Name, [Token])

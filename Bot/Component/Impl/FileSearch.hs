@@ -68,7 +68,10 @@ fileSearch = stateful (fileSearchCommand +++ reloadCatalogue) initialState
             when (timePassed > tenMinutes) $
                 liftBot initialState >>= put
 
-        fileSearchCommand = commandT "!files" fileSearchAction
+        fileSearchCommand = commandT usage "!files" fileSearchAction
+
+        -- The usage message, in case no arguments are passed.
+        usage = UsageMessage ["usage: !files string"]
 
         -- Given a list of search terms, responds with a list of files sorted by
         -- relevance

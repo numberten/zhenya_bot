@@ -11,8 +11,11 @@ import Data.Char
 import Data.List
 
 calcQueens :: Bot Component
-calcQueens = command "!queens" $ sendEach . setQueens
+calcQueens = command usage "!queens" $ sendEach . setQueens
     where
+        -- The usage message, in case no arguments are passed.
+        usage = UsageMessage ["usage: !queens number-of-queens"]
+
         sendEach = mapM_ ircReply
         setQueens = queen . takeWhile isDigit . unwords
 
