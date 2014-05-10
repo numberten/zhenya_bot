@@ -15,9 +15,12 @@ lookupPageUrl = "http://www.urbandictionary.com/define.php?term="
 randomPageUrl = "http://www.urbandictionary.com/random.php"
 
 define :: Bot Component
-define = command "!define" defineAction
+define = command usage "!define" defineAction
     where
-        -- Looks up the definition of words and reports it to chat
+        -- The usage message, in case no arguments are passed.
+        usage = UsageMessage ["usage: !define word"]
+
+        -- Looks up the definition of words and reports it to chat.
         defineAction words = do
             tags        <-  liftIO
                         .   fmap parseTags

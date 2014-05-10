@@ -23,10 +23,12 @@ data GrepOptions = GrepOptions {
 }
 
 grep :: HistoryHandle -> Bot Component
-grep handle = mkComponentT $ commandT "!grep" action
+grep handle = mkComponentT $ commandT usage "!grep" action
     where
+        -- The usage message, in case no arguments are passed.
+        usage = UsageMessage ["usage: !grep [-c int] [-n nick] [-m matches] regex"]
+
         action :: [String] -> IdentityT Bot ()
-        action []   = liftBot $ ircReply "!grep [-c int] [-n nick] [-m matches] regex"
         action args = do
             let GrepOptions{..} = parseArgs args
             -- ignore the last utterance for grepping

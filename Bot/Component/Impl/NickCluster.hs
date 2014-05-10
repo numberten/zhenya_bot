@@ -56,8 +56,11 @@ clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
         -- The action that is passed to persistent
         action  ::  String -> StateT (S.Set String) (IdentityT Bot) ()
         action  =   nickWatcher
-                +++ commandT "!alias" aliasCommand
-                +++ commandT "!forget" forgetCommand
+                +++ commandT NoUsageMessage "!alias" aliasCommand
+                +++ commandT usage "!forget" forgetCommand
+
+        -- The usage message for !forget, in case no arguments are passed.
+        usage = UsageMessage ["usage: !forget nick"]
 
         -- Add every nick to the cache and to the handle's set of nicks
         nickWatcher _ = do

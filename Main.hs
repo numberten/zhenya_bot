@@ -110,7 +110,8 @@ main = do
         ,   uptime
         ,   youtube
 
-        ,   command "!id" (ircReply . unwords)
+        ,   command (UsageMessage ["usage: !id string"]) "!id" 
+                (ircReply . unwords)
 
         ,   conditional (nickFlag `isPrefixOf`) (ircReply "hm?")
 

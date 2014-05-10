@@ -14,7 +14,7 @@ import qualified Data.Map as M
 -- | The lists component allows users to keep lists of things.
 -- It can be queried with the !list command.
 lists :: Bot Component
-lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
+lists = persistent "lists.txt" (commandT usage "!list" listsAction) initialState
     where
         initialState :: Bot (M.Map String [(String,Bool)])
         initialState = return M.empty
@@ -28,15 +28,16 @@ lists = persistent "lists.txt" (commandT "!list" listsAction) initialState
         listsAction ("rm":list:xs)          = rmElem list xs
         listsAction ("check":list:e:xs)     = checkOffElem list (e:xs)
         listsAction ("flush":list:[])       = flushList list
-        listsAction _                       = printUsageMessage
+        listsAction _                       = return ()
 
-        -- Prints usage message.
-        printUsageMessage = liftBot $ do
-            ircReply "!list show [list]"
-            ircReply "!list add [at index] list [element]"
-            ircReply "!list rm list [element]"
-            ircReply "!list check list element"
-            ircReply "!list flush list"
+        -- The usage message, in case no arguments are passed.
+        usage = UsageMessage [  
+                  "!list show [list]"
+              ,   "!list add [at index] list [element]"
+              ,   "!list rm list [element]"
+              ,   "!list check list element"
+              ,   "!list flush list"
+              ]
 
         -- Displays the list of lists.
         showLists = do
