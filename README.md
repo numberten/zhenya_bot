@@ -16,6 +16,21 @@ As of v1.0 zhenya_bot is known to be compatible with the following IRC daemons:
 While zhenya_bot may be compatible with other ircds, only those listed above have
 been shown to work as intended with all functionality as of v1.0.
 
+Installation
+------------
+
+You'll need ghc (the Glasgow Haskell Compiler) and cabal (the Haskell package manager).
+
+You can install them by following the links below:
+  - [ghc](https://www.haskell.org/ghc/docs/6.10.1/html/users_guide/installing-bin-distrib.html)
+  - [cabal](http://www.haskell.org/haskellwiki/Cabal-Install#Installation)
+
+Or by installing the [haskell-platform](http://www.haskell.org/platform/) which includes both.
+
+To run the bot you'll need to `git clone https://github.com/numberten/zhenya_bot.git` and execute
+the run script mentioned below. The first time you run zhenya_bot, it may take cabal several
+minutes to download and compile dependencies.
+
 Running
 -------
 
