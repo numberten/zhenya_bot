@@ -15,7 +15,6 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Monad.State
 import Control.Monad.Trans.Identity
-import Debug.Trace -- todo remove me
 import Data.Time.Clock
 import System.IO
 import Text.Printf

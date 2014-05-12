@@ -8,8 +8,6 @@ import Bot.Component.Command
 import Bot.Component.Impl.Stalker
 import Bot.IO
 
-import Debug.Trace
-
 import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Trans.Identity
@@ -43,7 +41,6 @@ grantOps stalker = mkComponentT $ ding +++ ascend +++ oprah
             channel <- gets currentChannel
             nicks   <- getNicksOnChannel stalker channel
             botNick <- gets botNick
-            trace botNick $ return ()
             let ops = map (giveOp channel)
                     . filter (/= botNick)
                     . map snd
