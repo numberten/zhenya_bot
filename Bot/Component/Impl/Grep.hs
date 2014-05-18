@@ -6,6 +6,7 @@ module Bot.Component.Impl.Grep (
 import Bot.Component
 import Bot.Component.Command
 import Bot.Component.Impl.History
+import Bot.Component.Impl.NickCluster
 import Bot.IO
 
 import Control.Applicative
@@ -22,8 +23,8 @@ data GrepOptions = GrepOptions {
     ,   pattern :: String
 }
 
-grep :: HistoryHandle -> Bot Component
-grep handle = mkComponentT $ commandT usage "!grep" action
+grep :: ClusterNickHandle -> HistoryHandle -> Bot Component
+grep cluster history = mkComponentT $ commandT usage "!grep" action
     where
         -- The usage message, in case no arguments are passed.
         usage = UsageMessage ["usage: !grep [-c int] [-n nick] [-m matches] regex"]
@@ -33,10 +34,11 @@ grep handle = mkComponentT $ commandT usage "!grep" action
             let GrepOptions{..} = parseArgs args
             -- ignore the last utterance for grepping
             history <-  (S.take <$> (\x -> x - 1) . S.length <*> id)
-                    <$> getHistory handle
+                    <$> getHistory history
+            clusters    <-  liftBot $ aliasesForNick cluster nick
             let pred    =   and . flip ((<**>) . return) [
                             -- Optionally filter by nick
-                            ((|| (nick == "")) . (== nick)) . fst
+                            ((|| (nick == "")) . (`elem` clusters)) . fst
                             -- Filter previous greps
                         ,   not . isPrefixOf "!grep" . snd
                             -- Matches the given regular expression

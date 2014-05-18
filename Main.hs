@@ -100,7 +100,7 @@ main = do
         ,   imitate cnHandle
         ,   github
         ,   grantOps stalkerHandle
-        ,   grep histHandle
+        ,   grep cnHandle histHandle
         ,   lists
         ,   calcQueens
         ,   rollDice
@@ -110,7 +110,7 @@ main = do
         ,   uptime
         ,   youtube
 
-        ,   command (UsageMessage ["usage: !id string"]) "!id" 
+        ,   command (UsageMessage ["usage: !id string"]) "!id"
                 (ircReply . unwords)
 
         ,   conditional (nickFlag `isPrefixOf`) (ircReply "hm?")
