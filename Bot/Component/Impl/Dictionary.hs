@@ -42,35 +42,42 @@ define = command usage "!define" defineAction
                         $   getResponseBody
                         =<< simpleHTTP (getRequest randomUrl)
 
-            let queriedDef  =   drop 1
-                            .   dropWhile (~/= "<div class=\"meaning\">")
-                            $   tags
-
             let targetWord  =   unwords words
+            let randWord    =   getWord randomtags
+            let queriedDef  =   getDefinition tags
+            let randDef     =   getDefinition randomtags
 
-            let randWord    =   fromTagText
-                            .   head
-                            .   drop 3  -- skip the div and a tags
-                            .   dropWhile (~/= "<div class=\"word\">")
-                            $   randomtags
-
-            let randDef     =   drop 1
-                            .   dropWhile (~/= "<div class=\"meaning\">")
-                            $   randomtags
-
+            -- If we use the random definition then replace the defined word
+            -- with the query.
             let (def, rand) =   if (queriedDef == [])
                                     then (randDef, True)
                                     else (queriedDef, False)
 
             let replaceWord =   replace randWord targetWord
 
-            let definition  =   (if rand then replaceWord else id)
-                            .   filter (/= '\n')
-                            .   fromTagText
-                            .   head
-                            $   def
+            let definition  =   (if rand then replaceWord else id) $ def
 
             ircReply        $   targetWord ++ ": " ++ definition
+
+        -- Trims white space from the front and back of a string.
+        trim = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
+
+        -- Squashes double white space into a single space.
+        squash []           = []
+        squash (' ':' ':xs) = squash (' ':xs)
+        squash (x:xs)       = x : squash xs
+
+        getDefinition = getDivText "meaning"
+
+        getWord = getDivText "word"
+
+        getDivText divClass = trim . squash
+                            . filter (/= '\n')
+                            . concatMap fromTagText
+                            . filter isTagText
+                            . takeWhile (~/= "</div>")
+                            . dropWhile (~/= divOpen)
+          where divOpen = "<div class=\"" ++ divClass ++ "\">"
 
         -- Performs a case insensitive replacement.
         replace :: String -> String -> String -> String
