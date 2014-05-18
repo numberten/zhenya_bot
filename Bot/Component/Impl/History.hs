@@ -26,11 +26,11 @@ type Message  = String
 -- should only be accessed through the exposed API.
 type HistoryInfo = S.Seq (Nick, Message)
 
--- | Opaque type for the ClusterNickInfo that is exposed externally.
+-- | Opaque type for the HistoryInfo that is exposed externally.
 type HistoryHandle = MVar HistoryInfo
 
--- | Creates a new ClusterNickHandle for use with the clusterNickService
--- component. A reference to this required in order to make API calls.
+-- | Creates a new HistoryHandle for use with the historyService component.
+-- A reference to this required in order to make API calls.
 newHistoryHandle :: IO HistoryHandle
 newHistoryHandle = liftIO newEmptyMVar
 

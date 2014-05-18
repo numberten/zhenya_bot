@@ -6,6 +6,7 @@ module Bot.Component.Impl.NickCluster (
 ,   newClusterNickHandle
 ,   clusterNickService
 ,   aliasesForNick
+,   clusterForNick
 ,   allNickAliases
 )   where
 
@@ -16,6 +17,7 @@ import Bot.Component.Stateful
 import Bot.Component.Timer
 import Bot.IO
 
+import Control.Applicative
 import Control.Concurrent
 import Control.Monad.State
 import Control.Monad.Trans.Identity
@@ -23,6 +25,7 @@ import Data.Clustering.Hierarchical
 import Data.Char
 import Data.List
 import Data.List.LCS
+import Data.Maybe
 import qualified Data.Set as S
 
 -- | The internal state of the nick clustering service. The datatype is opaque
@@ -85,7 +88,8 @@ clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
             let matches         =   S.filter (matchedFilter nickSet) clusters
             let unmatched       =   S.filter (unmatchedFilter clusters) nickSet
             mapM_ replyClusters $ S.elems matches
-            mapM_ (liftBot . ircReply) $ S.elems unmatched
+            liftBot $ ircReply $
+                "No cluster for: " ++ (intercalate ", " $ S.elems unmatched)
             where
                 matchedFilter nickSet = not . S.null . S.intersection nickSet
                 unmatchedFilter clusters =
@@ -127,11 +131,19 @@ clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
                 lengthB = fromIntegral $ length b'
 
 -- | Returns a list of nicks that have been determined to be aliases for the
--- supplied nick.
+-- supplied nick. Similar to `clusterForNick` with the exception that if the
+-- nick does not have a corresponding cluster the singleton list of the given
+-- nick is returned.
 aliasesForNick :: ClusterNickHandle -> String -> Bot [String]
-aliasesForNick handle nick = do
+aliasesForNick handle nick = fromMaybe [nick] <$> clusterForNick handle nick
+
+-- | Returns the cluster that the nick belongs to. If the nick does not belong
+-- to a cluster then Nothing is returned.
+clusterForNick :: ClusterNickHandle -> String -> Bot (Maybe [String])
+clusterForNick handle nick = do
     ClusterNickInfo{..} <-  liftIO $ readMVar handle
-    return  $ head . (++[[nick]])
+    return  $ listToMaybe
+            $ take 1
             $ map S.elems
             $ S.elems
             $ S.filter (S.member nick) clusters
