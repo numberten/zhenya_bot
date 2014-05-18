@@ -88,7 +88,7 @@ clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
             let matches         =   S.filter (matchedFilter nickSet) clusters
             let unmatched       =   S.filter (unmatchedFilter clusters) nickSet
             mapM_ replyClusters $ S.elems matches
-            liftBot $ ircReply $
+            unless (S.null unmatched) $ liftBot $ ircReply $
                 "No cluster for: " ++ (intercalate ", " $ S.elems unmatched)
             where
                 matchedFilter nickSet = not . S.null . S.intersection nickSet
