@@ -55,6 +55,9 @@ ircWrite command message = do
         uncurry3 f (a,b,c) = f a b c
 
         writeToLoop :: String -> Bot ()
+        writeToLoop msg@('P':'O':'N':'G':' ':_) = do
+            handle  <-  gets socket
+            liftIO $ hPutStr handle msg
         writeToLoop msg = do
             queue <- gets messageQueue
             liftIO $ atomically $ writeTChan queue msg
