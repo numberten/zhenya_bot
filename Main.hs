@@ -17,10 +17,11 @@ import Bot.Component.Impl.NickCluster
 import Bot.Component.Impl.Op
 import Bot.Component.Impl.Queens
 import Bot.Component.Impl.Roll
-import Bot.Component.Impl.Uptime
 import Bot.Component.Impl.Seen
 import Bot.Component.Impl.Spotify
 import Bot.Component.Impl.Stalker
+import Bot.Component.Impl.Twitter
+import Bot.Component.Impl.Uptime
 import Bot.Component.Impl.Youtube
 import Bot.IO
 
@@ -95,18 +96,19 @@ main = do
         ,   historyService histHandle
         ,   stalker stalkerHandle
 
+        ,   calcQueens
         ,   define
         ,   fileSearch
-        ,   imitate cnHandle
         ,   github
         ,   grantOps stalkerHandle
         ,   grep cnHandle histHandle
+        ,   imitate cnHandle
         ,   lists
-        ,   calcQueens
         ,   rollDice
         ,   sayGoodbye
         ,   seen cnHandle
         ,   spotify
+        ,   twitter
         ,   uptime
         ,   youtube
 
