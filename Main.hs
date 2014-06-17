@@ -14,6 +14,7 @@ import Bot.Component.Impl.History
 import Bot.Component.Impl.Lists
 import Bot.Component.Impl.NGram
 import Bot.Component.Impl.NickCluster
+import Bot.Component.Impl.Onion
 import Bot.Component.Impl.Op
 import Bot.Component.Impl.Queens
 import Bot.Component.Impl.Roll
@@ -104,6 +105,7 @@ main = do
         ,   grep cnHandle histHandle
         ,   imitate cnHandle
         ,   lists
+        ,   onion
         ,   rollDice
         ,   sayGoodbye
         ,   seen cnHandle
