@@ -21,6 +21,7 @@ import Bot.Component.Impl.Roll
 import Bot.Component.Impl.Seen
 import Bot.Component.Impl.Spotify
 import Bot.Component.Impl.Stalker
+import Bot.Component.Impl.Substitute
 import Bot.Component.Impl.Twitter
 import Bot.Component.Impl.Uptime
 import Bot.Component.Impl.Youtube
@@ -110,6 +111,7 @@ main = do
         ,   sayGoodbye
         ,   seen cnHandle
         ,   spotify
+        ,   substitute cnHandle histHandle
         ,   twitter
         ,   uptime
         ,   youtube
@@ -117,7 +119,7 @@ main = do
         ,   command (UsageMessage ["usage: !id string"]) "!id"
                 (ircReply . unwords)
 
-        ,   conditional (nickFlag `isPrefixOf`) (ircReply "hm?")
+        ,   constConditional (nickFlag `isPrefixOf`) $ ircReply "hm?"
 
         ,   fuzzyMatch "pigups" 0.1
                 (ircReply "Jolly good pigups, jolly good.")
