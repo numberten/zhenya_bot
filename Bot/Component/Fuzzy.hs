@@ -34,7 +34,7 @@ fuzzyMatchT ::  BotMonad b
             ->  b ()
             -- | Resulting Botable method
             ->  String -> b ()
-fuzzyMatchT target threshold = conditionalT (match target threshold)
+fuzzyMatchT target threshold = constConditionalT (match target threshold)
 
 
 -- | Determines if two strings match based on their edit distance.

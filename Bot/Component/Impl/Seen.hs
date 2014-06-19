@@ -45,7 +45,7 @@ seen cnHandle = persistent "seen.txt" action initialState
 
 -- | Runs for every message updates the time last seen for the current nick.
 seenLogger :: String -> StateT TimeMap (IdentityT Bot) ()
-seenLogger = conditionalT (const True) seenLoggerAction
+seenLogger = constConditionalT (const True) seenLoggerAction
 
 seenLoggerAction :: StateT TimeMap (IdentityT Bot) ()
 seenLoggerAction = do
