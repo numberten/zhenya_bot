@@ -23,7 +23,7 @@ onion = regex pattern linkHandler
                             <$> openURIWithOpts [userAgent] url
 
         -- Run for each link that looks like an onion article
-        linkHandler url =   liftIO (downloadAsTags ("http://" ++ url))
+        linkHandler url =   liftIO (downloadAsTags ("http://" ++ url ++ "/"))
                         >>= either (const $ ircReply "uh oh") describeLink
 
         -- Attempt to pull the title of the article and relay it to IRC
