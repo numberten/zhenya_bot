@@ -16,7 +16,7 @@ import qualified Data.ByteString.Char8 as BS
 onion :: Bot Component
 onion = regex pattern linkHandler
     where
-        pattern     = "www.theonion.com/articles/[a-zA-Z0-9_#-]+,[0-9]+/"
+        pattern     = "www.theonion.com/articles/[a-zA-Z0-9_#-]+,[0-9]+"
         userAgent   = CurlUserAgent "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
 
         downloadAsTags url  =   fmap parseTags
