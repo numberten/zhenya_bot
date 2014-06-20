@@ -11,7 +11,7 @@ import Bot.IO
 import Control.Monad.State
 import Control.Monad.Trans.Identity
 import Data.List (isPrefixOf)
-import Data.List.Split (splitOn)
+import Data.List.Split (splitWhen)
 import Data.List.Utils (replace, subIndex)
 import qualified Data.Sequence as S
 
@@ -23,11 +23,11 @@ substitute cluster history = mkComponentT $ conditionalT ("s/" `isPrefixOf`) act
         nick <- gets currentNick
         history <- getHistory history
         cluster <- liftBot $ aliasesForNick cluster nick
-        case splitOn "/" args of
+        case splitter args of
             (_:find:replace:"g":_)  ->
                 liftBot . ircReply 
                         . ((nick++": ")++)
-                        . suball find replace
+                        . suball (removeBackSlash find) replace
                         . snd 
                         . flip S.index 1 
                         . S.filter ((`elem` cluster) . fst) 
@@ -35,7 +35,7 @@ substitute cluster history = mkComponentT $ conditionalT ("s/" `isPrefixOf`) act
             (_:find:replace:_)      -> 
                 liftBot . ircReply 
                         . ((nick++": ")++)
-                        . subfirst find replace
+                        . subfirst (removeBackSlash find) replace
                         . snd 
                         . flip S.index 1 
                         . S.filter ((`elem` cluster) . fst) 
@@ -43,7 +43,7 @@ substitute cluster history = mkComponentT $ conditionalT ("s/" `isPrefixOf`) act
             _                       -> return ()
 
 suball :: String -> String -> String -> String
-suball = replace
+suball = safe_replace
 
 subfirst :: String -> String -> String -> String
 subfirst foo bar string = 
@@ -52,3 +52,22 @@ subfirst foo bar string =
     Just i  -> take i string
             ++ bar
             ++ drop (i + length foo) string
+
+splitter :: String -> [String]
+splitter = (map . map) snd 
+         . splitWhen isNotEscapedForwardSlash
+         . (zip `ap` tail)
+  where
+    isNotEscapedForwardSlash (x,y) =
+      if (x /= '\\' && y == '/')
+        then True
+        else False
+
+removeBackSlash :: String -> String
+removeBackSlash ""             = ""
+removeBackSlash ('\\':'\\':xs) = '\\':removeBackSlash xs
+removeBackSlash ('\\':xs)      = removeBackSlash xs
+removeBackSlash (x:xs)         = x:removeBackSlash xs
+
+safe_replace :: String -> String -> String -> String
+safe_replace a b c = if a == "" then c else replace a b c
