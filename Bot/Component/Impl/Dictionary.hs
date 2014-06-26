@@ -8,7 +8,8 @@ import Bot.IO
 
 import Data.Char
 import Data.List
-import Network.HTTP
+import Data.ByteString.Lazy.Internal as LBS
+import Network.HTTP.Conduit
 import Text.HTML.TagSoup
 
 lookupPageUrl = "http://www.urbandictionary.com/define.php?term="
@@ -23,24 +24,19 @@ define = command usage "!define" defineAction
         -- Looks up the definition of words and reports it to chat.
         defineAction words = do
             tags        <-  liftIO
-                        .   fmap parseTags
-                        $   getResponseBody
-                        =<< simpleHTTP (getRequest
+                        $   return
+                        .   parseTags
+                        .   show
+                        =<< (simpleHttp 
                         $   lookupPageUrl
                         ++  map (\x -> if x == ' ' then '+' else x)
-                                (unwords words))
-
-            redirect    <-  liftIO
-                        .   fmap parseTags
-                        $   getResponseBody
-                        =<< simpleHTTP (getRequest randomPageUrl)
-
-            let randomUrl   = fromAttrib "href" . head $ drop 3 redirect
+                                (unwords words) :: IO LBS.ByteString)
 
             randomtags  <-  liftIO
-                        .   fmap parseTags
-                        $   getResponseBody
-                        =<< simpleHTTP (getRequest randomUrl)
+                        $   return
+                        .   parseTags
+                        .   show
+                        =<< (simpleHttp randomPageUrl :: IO LBS.ByteString)
 
             let targetWord  =   unwords words
             let randWord    =   getWord randomtags
@@ -49,13 +45,13 @@ define = command usage "!define" defineAction
 
             -- If we use the random definition then replace the defined word
             -- with the query.
-            let (def, rand) =   if (queriedDef == [])
+            let (def, rand) =   if null queriedDef
                                     then (randDef, True)
                                     else (queriedDef, False)
 
             let replaceWord =   replace randWord targetWord
 
-            let definition  =   (if rand then replaceWord else id) $ def
+            let definition  =   (if rand then replaceWord else id) def
 
             ircReply        $   targetWord ++ ": " ++ definition
 
@@ -72,7 +68,7 @@ define = command usage "!define" defineAction
         getWord = getDivText "word"
 
         getDivText divClass = trim . squash
-                            . filter (/= '\n')
+                            . filterBackSlashNR
                             . concatMap fromTagText
                             . filter isTagText
                             . takeWhile (~/= "</div>")
@@ -88,3 +84,13 @@ define = command usage "!define" defineAction
             = new ++ replace old new (drop (length old) source)
 
         replace old new (x:xs)  = x : replace old new xs
+
+        filterBackSlashNR :: String -> String
+        filterBackSlashNR = reverse . fbsn ""
+          where
+            fbsn acc ""            = acc
+            fbsn acc ('\\':'n':s) = fbsn acc s
+            fbsn acc ('\\':'r':s) = fbsn acc s
+            fbsn acc (s:ss)        = fbsn (s:acc) ss
+
+
