@@ -15,7 +15,7 @@ import qualified Data.ByteString.Char8 as BS
 twitter :: Bot Component
 twitter = regex pattern linkHandler
     where
-        pattern     = "twitter.com/[^ ]+/status/[0-9]+"
+        pattern     = "twitter.com/[^ ]+/status(es)?/[0-9]+"
 
         userNameClass = "username js-action-profile-name"
         fullNameClass = "fullname js-action-profile-name show-popup-with-id"
