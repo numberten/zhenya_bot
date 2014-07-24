@@ -45,7 +45,8 @@ stateful action initialState =
         MkComponent <$> statefulP action initialState () <*> return Nothing
 
 
--- | Creates
+-- | Creates a `Component` given an action and an initial state that operates in
+-- a StateT monad.
 statefulP   ::  BotMonad b
             =>  (String -> StateT s b ())
             ->  Bot s

@@ -19,6 +19,7 @@ import Bot.Component.Impl.NickCluster
 import Bot.Component.Impl.Onion
 import Bot.Component.Impl.Op
 import Bot.Component.Impl.Queens
+import Bot.Component.Impl.Reputation
 import Bot.Component.Impl.Roll
 import Bot.Component.Impl.Seen
 import Bot.Component.Impl.Spotify
@@ -83,10 +84,10 @@ flagDefinition = Flags {
 -- and start the IRC bot.
 main :: IO ()
 main = do
-    Flags{..}     <-  cmdArgs flagDefinition
-    cnHandle      <-  newClusterNickHandle
-    histHandle    <-  newHistoryHandle
-    stalkerHandle <-  newStalkerHandle
+    Flags{..}           <-  cmdArgs flagDefinition
+    nickClusterHandle   <-  newClusterNickHandle
+    historyHandle       <-  newHistoryHandle
+    stalkerHandle       <-  newStalkerHandle
     -- Create a directory for runtime data if one does not already exist
     runBot $ defaultBotConfig {
             cfgServer     = serverFlag
@@ -96,8 +97,8 @@ main = do
         ,   cfgNick       = nickFlag
         ,   cfgWriteRate  = writeFlag
         } `withComponents` [
-            clusterNickService cnHandle 0.3
-        ,   historyService histHandle
+            clusterNickService nickClusterHandle 0.3
+        ,   historyService historyHandle
         ,   stalker stalkerHandle
 
         ,   calcQueens
@@ -105,16 +106,17 @@ main = do
         ,   fileSearch
         ,   github
         ,   grantOps stalkerHandle
-        ,   grep cnHandle histHandle
+        ,   grep nickClusterHandle historyHandle
         ,   helpComponent
-        ,   imitate cnHandle
+        ,   imitate nickClusterHandle
         ,   lists
         ,   onion
+        ,   reputation nickClusterHandle historyHandle
         ,   rollDice
         ,   sayGoodbye
-        ,   seen cnHandle
+        ,   seen nickClusterHandle
         ,   spotify
-        ,   substitute cnHandle histHandle
+        ,   substitute nickClusterHandle historyHandle
         ,   twitter
         ,   uptime
         ,   youtube

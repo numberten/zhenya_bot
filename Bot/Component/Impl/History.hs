@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 module Bot.Component.Impl.History (
     HistoryHandle
+,   Nick
+,   Message
 ,   newHistoryHandle
 ,   historyService
 ,   getHistory

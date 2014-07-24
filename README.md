@@ -66,7 +66,7 @@ Commands
       - attempts to +o speaker, with echo
    - !ding
       - attempts to +o speaker, without echo
-   - !roll \<number\> 
+   - !roll \<number\>
       - privmsgs a random number between 1 and \<number\>
    - !be \<nick\>
       - zhenya_bot will attempt to say a sentence in the manner of \<nick\>, using a bigram model trained off logs

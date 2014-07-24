@@ -40,7 +40,7 @@ data BotState = BotState {
 -- | A type synonym for the Bot monad.
 type Bot = StateT BotState IO
 
-class (Monad b) => BotMonad b where
+class (Applicative b, MonadIO b, Monad b) => BotMonad b where
     -- | Anything required to turn an instance of b a into Bot a
     type BotExtractor b :: *
 
