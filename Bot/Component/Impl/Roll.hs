@@ -13,10 +13,10 @@ import System.Random
 -- | Implements the "!roll sides" command, where the bot replies with a roll of
 -- a random sides sided dice.
 rollDice :: Bot Component
-rollDice = command usage "!roll" rollAction
+rollDice = (command "!roll" rollAction) `withHelpMessage` help
     where
-        -- The usage message, in case no arguments are passed.
-        usage = UsageMessage ["usage: !roll number"]
+        help = helpForCommand "roll" ["usage: !roll number"]
+
         rollAction = (ircReplyMaybe =<<) . randomI . takeWhile isDigit . unwords
 
 randomI :: String -> Bot (Maybe String)

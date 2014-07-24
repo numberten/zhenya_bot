@@ -7,10 +7,12 @@ module Bot.Component (
 ,   BotState (..)
 ,   Component (..)
 ,   ComponentPart
+,   HelpMessage (..)
 ,   BotMonad (..)
 ,   liftIO
 ,   mkComponent
 ,   mkComponentT
+,   withHelpMessage
 )   where
 
 import Control.Applicative
@@ -58,16 +60,30 @@ instance BotMonad (IdentityT Bot) where
     liftBot = lift
     dropBot _ = ((,()) <$>) . runIdentityT
 
--- | A `Component` represents an isolated IRC bot feature.
---
--- This type combines a BotDrop value for lowering a MonadBot value to a Bot
--- value and a method that takes a raw IRC message returns a new BotDrop value.
+-- | At a high level, `ComponentPart` is a function that takes an IRC line and
+-- returns something that can be turned into a BotMonad.
 --
 -- The existential is necessary for making the types work out when storing
 -- heterogeneous MonadBot types in the same collection.
 type ComponentPart b = (BotExtractor b, String -> b ())
 
-data Component = forall b . BotMonad b => MkComponent (ComponentPart b)
+-- | The help message associated with this component. There can either be no
+-- help string, or a canonical name, a list of aliases, and a list of lines that
+-- are the help message.
+data HelpMessage = HelpMessage {
+      canonicalName :: String
+    , helpAliases   :: [String]
+    , helpString    :: [String]
+  }
+
+-- | A `Component` represents an isolated IRC bot feature. It wraps
+-- `ComponentPart` in an existential so that heterogeneous collections of
+-- `ComponentPart`s can be contained in the same list.
+--
+-- The existential is necessary for making the types work out when storing
+-- heterogeneous MonadBot types in the same collection.
+data Component =  forall b . BotMonad b
+               => MkComponent (ComponentPart b) (Maybe HelpMessage)
 
 -- | Takes a `` type and creates a `Bot BotComponent` that can be used
 -- with `withComponents`.
@@ -75,9 +91,14 @@ mkComponent ::  (String -> Bot ())
             ->  Bot Component
 mkComponent = mkComponentT . (IdentityT .)
 
--- | Takes a `` type and creates a `Bot BotComponent` that can be used
+-- | Takes a `ComponentPart` and creates a `Bot BotComponent` that can be used
 -- with `withComponents`.
 mkComponentT    ::  (BotMonad b, BotExtractor b ~ ())
                 =>  (String -> b ())
                 ->  Bot Component
-mkComponentT action = return $ MkComponent ((), action)
+mkComponentT action = return $ MkComponent ((), action) Nothing
+
+-- | Annotates a component with a help message.
+withHelpMessage :: Bot Component -> HelpMessage -> Bot Component
+withHelpMessage component help = annotate <$> component
+  where annotate (MkComponent part _) = MkComponent part (Just help)

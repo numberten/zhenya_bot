@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 import Bot
+import Bot.Component
 import Bot.Component.Command
 import Bot.Component.Conditional
 import Bot.Component.Fuzzy
@@ -10,6 +11,7 @@ import Bot.Component.Impl.FileSearch
 import Bot.Component.Impl.Github
 import Bot.Component.Impl.Goodbye
 import Bot.Component.Impl.Grep
+import Bot.Component.Impl.Help
 import Bot.Component.Impl.History
 import Bot.Component.Impl.Lists
 import Bot.Component.Impl.NGram
@@ -104,6 +106,7 @@ main = do
         ,   github
         ,   grantOps stalkerHandle
         ,   grep cnHandle histHandle
+        ,   helpComponent
         ,   imitate cnHandle
         ,   lists
         ,   onion
@@ -116,8 +119,8 @@ main = do
         ,   uptime
         ,   youtube
 
-        ,   command (UsageMessage ["usage: !id string"]) "!id"
-                (ircReply . unwords)
+        ,   command "!id" (ircReply . unwords)
+                `withHelpMessage` helpForCommand "id" ["usage: !id string"]
 
         ,   constConditional (nickFlag `isPrefixOf`) $ ircReply "hm?"
 

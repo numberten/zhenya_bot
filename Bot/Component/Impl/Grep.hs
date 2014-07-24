@@ -24,10 +24,12 @@ data GrepOptions = GrepOptions {
 }
 
 grep :: ClusterNickHandle -> HistoryHandle -> Bot Component
-grep cluster history = mkComponentT $ commandT usage "!grep" action
+grep cluster history = (mkComponentT $ commandT "!grep" action)
+                            `withHelpMessage` help
     where
         -- The usage message, in case no arguments are passed.
-        usage = UsageMessage ["usage: !grep [-c int] [-n nick] [-m matches] regex"]
+        help = helpForCommand "grep"
+                ["usage: !grep [-c int] [-n nick] [-m matches] regex"]
 
         action :: [String] -> IdentityT Bot ()
         action args = do

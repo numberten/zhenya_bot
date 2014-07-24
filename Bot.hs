@@ -143,9 +143,9 @@ runBot BotConfig{..}    =   connect
         -- Takes a message and a component and returns Bot wrapped resulting
         -- component. Used in runComponents.
         process :: String -> Component -> Bot Component
-        process message (MkComponent (extractor, action)) = do
+        process message (MkComponent (extractor, action) help) = do
             newExtractor <- dropBot' extractor $ action message
-            return $ MkComponent (newExtractor, action)
+            return $ MkComponent (newExtractor, action) help
 
 -- | Read from IRC, but if there is no response in a reasonable amount of time
 -- return an empty string.

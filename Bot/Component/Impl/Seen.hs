@@ -38,8 +38,10 @@ type TimeMap = M.Map String SeenTime
 -- | The seen component keeps a mapping of nicks to times that they last spoke.
 -- And can be queried through the !seen command.
 seen :: ClusterNickHandle -> Bot Component
-seen cnHandle = persistent "seen.txt" action initialState
+seen cnHandle = persistent "seen.txt" action initialState `withHelpMessage` help
     where
+        help = helpForCommand "seen" ["usage: !seen nick"]
+
         action          = seenLogger +++ seenCommand cnHandle
         initialState    = return M.empty
 
@@ -55,10 +57,8 @@ seenLoggerAction = do
 
 -- | Responds to !seen commands.
 seenCommand :: ClusterNickHandle -> String -> StateT TimeMap (IdentityT Bot) ()
-seenCommand cnHandle = commandT usage "!seen" $ seenCommandAction cnHandle
+seenCommand cnHandle = commandT "!seen" $ seenCommandAction cnHandle
 
--- The usage message, in case no arguments are passed.
-usage = UsageMessage ["usage: !seen nick"]
 seenCommandAction   ::  ClusterNickHandle
                     ->  [String]
                     ->  StateT TimeMap (IdentityT Bot) ()

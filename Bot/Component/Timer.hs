@@ -42,7 +42,7 @@ ioTimer name delay action = void $ liftIO $ forkIO loop
 timer   :: (String -> TimerT (IdentityT Bot) ())
         ->  Integer
         ->  Bot Component
-timer action delay = MkComponent <$> timerP action delay ()
+timer action delay = MkComponent <$> timerP action delay () <*> return Nothing
 
 -- | A more generic `timer` that creates a `ComponentPart` which allows it to be
 -- stacked with the `>>+` combinator.

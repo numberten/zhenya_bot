@@ -36,8 +36,10 @@ type ImitateState = M.Map String BiGramModel
 
 -- | Speak like the various members of the IRC channel.
 imitate :: ClusterNickHandle -> Bot Component
-imitate handle = stateful commandAction initialState
+imitate handle = stateful commandAction initialState `withHelpMessage` help
     where
+        help = helpForCommand "be" ["usage: !be nick"]
+
         -- Where should we look for the catalogue?
         logPath = do
             directory <- gets dataDirectory
@@ -91,7 +93,7 @@ imitate handle = stateful commandAction initialState
 
         -- First attempts to group nicks together based on clusters, and then
         -- generates a sentence in the literary stylings of the given nick.
-        commandAction = commandT usage "!be" $ \args -> case args of
+        commandAction = commandT "!be" $ \args -> case args of
             [nick]  -> do
                 mergeModels
                 keyNick         <-  canonicalNick nick
@@ -101,9 +103,6 @@ imitate handle = stateful commandAction initialState
                     liftBot $ ircReply message
                 fromMaybe (liftBot $ ircReply "not a guy.") sayMessage
             _       -> liftBot $ ircReply "be who?"
-
-        -- The usage message, in case no arguments are passed.
-        usage = UsageMessage ["usage: !be nick"]
 
 -- | Process a line from the specially formatted log file.
 processLine :: String -> (Name, [Token])

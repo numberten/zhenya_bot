@@ -16,10 +16,9 @@ lookupPageUrl = "http://www.urbandictionary.com/define.php?term="
 randomPageUrl = "http://www.urbandictionary.com/random.php"
 
 define :: Bot Component
-define = command usage "!define" defineAction
+define = (command "!define" defineAction) `withHelpMessage` help
     where
-        -- The usage message, in case no arguments are passed.
-        usage = UsageMessage ["usage: !define word"]
+        help = helpForCommand "define" ["usage: !define word"]
 
         -- Looks up the definition of words and reports it to chat.
         defineAction words = do
@@ -27,7 +26,7 @@ define = command usage "!define" defineAction
                         $   return
                         .   parseTags
                         .   show
-                        =<< (simpleHttp 
+                        =<< (simpleHttp
                         $   lookupPageUrl
                         ++  map (\x -> if x == ' ' then '+' else x)
                                 (unwords words) :: IO LBS.ByteString)

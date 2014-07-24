@@ -48,10 +48,21 @@ newClusterNickHandle =
 -- must be included in the Bot otherwise all API calls will hang.
 clusterNickService :: ClusterNickHandle -> Double -> Bot Component
 clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
-                                    >>  persistent nickFile action initial
+                                    >>  (persistent nickFile action initial
+                                            `withHelpMessage` help)
     where
         nickFile = "nick-cluster.txt"
         delay = 1000000 -- 1 second
+
+        help = HelpMessage {
+                canonicalName   = "nick-cluster"
+            ,   helpAliases     = [
+                        "nick-cluster"
+                    ,   "!alias", "alias"
+                    ,   "forget", "!forget"
+                    ]
+            ,   helpString      = ["usage: !forget nick"]
+            }
 
         -- Create the very first ClusterNickState
         initial =   return S.empty
@@ -59,11 +70,8 @@ clusterNickService handle threshold =   ioTimer "NickCluster" delay clusterTimer
         -- The action that is passed to persistent
         action  ::  String -> StateT (S.Set String) (IdentityT Bot) ()
         action  =   nickWatcher
-                +++ commandT NoUsageMessage "!alias" aliasCommand
-                +++ commandT usage "!forget" forgetCommand
-
-        -- The usage message for !forget, in case no arguments are passed.
-        usage = UsageMessage ["usage: !forget nick"]
+                +++ commandT "!alias" aliasCommand
+                +++ commandT "!forget" forgetCommand
 
         -- Add every nick to the cache and to the handle's set of nicks
         nickWatcher _ = do

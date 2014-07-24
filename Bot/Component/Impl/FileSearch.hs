@@ -24,7 +24,10 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 
 fileSearch = stateful (fileSearchCommand +++ reloadCatalogue) initialState
+                `withHelpMessage` help
     where
+        help = helpForCommand "files" ["usage: !files string"]
+
         -- The initial state is the time the current index was loaded, and the
         -- index of files
         initialState = do
@@ -68,10 +71,7 @@ fileSearch = stateful (fileSearchCommand +++ reloadCatalogue) initialState
             when (timePassed > tenMinutes) $
                 liftBot initialState >>= put
 
-        fileSearchCommand = commandT usage "!files" fileSearchAction
-
-        -- The usage message, in case no arguments are passed.
-        usage = UsageMessage ["usage: !files string"]
+        fileSearchCommand = commandT "!files" fileSearchAction
 
         -- Given a list of search terms, responds with a list of files sorted by
         -- relevance

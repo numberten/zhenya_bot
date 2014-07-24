@@ -41,7 +41,9 @@ instance BotMonad b => BotMonad (StateT s b) where
 stateful    ::  (String -> StateT s (IdentityT Bot) ())
             ->  Bot s
             ->  Bot Component
-stateful action initialState = MkComponent <$> statefulP action initialState ()
+stateful action initialState =
+        MkComponent <$> statefulP action initialState () <*> return Nothing
+
 
 -- | Creates
 statefulP   ::  BotMonad b
@@ -61,6 +63,7 @@ persistent  ::  (Show s, Read s, Eq s)
             ->  Bot Component
 persistent saveFile action initialState =
     MkComponent <$> persistentP saveFile action initialState ()
+                <*> return Nothing
 
 -- | A `stateful` `BotComponent` that saves its state in a text file between
 -- sessions that also has a startupAction. This is useful is there is some
