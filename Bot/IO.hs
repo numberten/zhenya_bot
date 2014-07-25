@@ -24,11 +24,11 @@ import Text.Printf
 -- message.
 ircWriteLoop :: TChan String -> Handle -> Double -> IO ()
 ircWriteLoop chan handle writeRate = forever $ do
-  let delay =  ceiling $ (1 / writeRate) * 1000000
+  let delay =  floor $ (1 / writeRate) * 1000000
   start     <- getCurrentTime
   message   <- atomically $ readTChan chan
   end       <- getCurrentTime
-  let left  = delay - (ceiling $ diffUTCTime end start * 1000000)
+  let left  = delay - (floor $ diffUTCTime end start * 1000000)
   when (left > 0) (threadDelay left)
   liftIO $ hPutStr handle message
 
