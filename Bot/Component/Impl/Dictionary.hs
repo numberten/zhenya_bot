@@ -44,7 +44,7 @@ define = (command "!define" defineAction) `withHelpMessage` help
 
             -- If we use the random definition then replace the defined word
             -- with the query.
-            let (def, rand) =   if null queriedDef
+            let (def, rand) =   if null words || null queriedDef
                                     then (randDef, True)
                                     else (queriedDef, False)
 
