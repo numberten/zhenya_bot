@@ -20,7 +20,10 @@ rollDice = (command "!roll" rollAction) `withHelpMessage` help
         rollAction = (ircReplyMaybe =<<) . randomI . takeWhile isDigit . unwords
 
 randomI :: String -> Bot (Maybe String)
-randomI []  =   return Nothing
-randomI i   =   liftM (Just . show . fst)
-            $   liftIO (fmap (randomR (1, read i :: Integer)) newStdGen)
+randomI []  = return Nothing
+randomI i   | n > 0     = liftM (Just . show . fst)
+                        $ liftIO (fmap (randomR (1, n)) newStdGen)
+            | otherwise = return Nothing
+    where
+        n = read i :: Integer
 
