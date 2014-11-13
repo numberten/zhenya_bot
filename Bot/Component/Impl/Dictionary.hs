@@ -77,6 +77,7 @@ define = (command "!define" defineAction) `withHelpMessage` help
         -- Performs a case insensitive replacement.
         replace :: String -> String -> String -> String
         replace _   _   []      = []
+        replace []  _   source  = source
 
         replace old new source
             | isPrefixOf (map toLower old) (map toLower source)
